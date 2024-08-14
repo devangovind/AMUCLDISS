@@ -115,6 +115,7 @@ def format_to_html(text):
     # Replace bold text denoted by '**'
     text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
     text = re.sub(r'```.*?```', '', text, flags=re.DOTALL)
+    text = re.sub(r"【.*?】", "", text)
     return text
 
 def format_to_chat(text):
@@ -170,29 +171,35 @@ def gen_plots(code):
     plt.close()
     return filepath
 
+# def gen_plots2(code):
+#     try:
+#         kpi_dict = {}
+#         try:
+#             exec(code, {}, kpi_dict)
+#         except Exception as e:
+#             print(e)
+#             return
+#         def find_dict(local_v):
+#             return {k: v for k,v in local_v.items() if isinstance(v, dict)}
+#         kpis = find_dict(kpi_dict)
+#         kpis = kpis["kpis"]
+#         try:
+#             years = kpis["time"]
+#             kpis.pop("time")
+#         except:
+#             years = kpis["Time"]
+#             kpis.pop("Time")
+#         gen_plots3(years, kpis)
+#     except Exception as e:
+#         print("outer", e)
+#         # exec(code, {}, kpi_dict)
+#         return
 def gen_plots2(code):
     try:
-        kpi_dict = {}
-        try:
-            exec(code, {}, kpi_dict)
-        except Exception as e:
-            print(e)
-            return
-        def find_dict(local_v):
-            return {k: v for k,v in local_v.items() if isinstance(v, dict)}
-        kpis = find_dict(kpi_dict)
-        kpis = kpis["kpis"]
-        try:
-            years = kpis["time"]
-            kpis.pop("time")
-        except:
-            years = kpis["Time"]
-            kpis.pop("Time")
-        gen_plots3(years, kpis)
+        exec(code)
     except Exception as e:
-        print("outer", e)
-        # exec(code, {}, kpi_dict)
-        return
+        print(code, e)
+
 
 def gen_plots3(years, data):
     for metric, value in data.items():
@@ -307,10 +314,9 @@ async def ask_prompt(request: Request):
     ppt_slide = prompt_text.split()[0]
     
     res = model.ask_prompt(prompt_text)
-    
-    code_part = parse_code(res)
-    if code_part:
-        await gen_plots2(code_part)
+    # code_part = parse_code(res)
+    # if code_part:
+    #     await gen_plots2(code_part)
     ppt.update_slide(ppt_slide.lower(),ppt_slide.lower(), res)
     return StreamingResponse(streamed_res(format_to_html(res)), media_type='text/event-stream')
 
@@ -358,7 +364,7 @@ def list_images(image_context = Query(None, alias="context")):
         files = [entry.name for entry in entries if entry.is_file() and image_context.lower() in entry.name.lower()]
     if image_context == "":
         with os.scandir(PLOT_DIR) as entries:
-            files = [entry.name for entry in entries if entry.is_file() if "revenue" not in entry.name.lower() and "operating" not in entry.name.lower()]
+            files = [entry.name for entry in entries if entry.is_file() if "revenue" not in entry.name.lower() and "operating" not in entry.name.lower() and "cash" not in entry.name.lower()]
     print(files)
     return files
 

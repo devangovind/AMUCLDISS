@@ -24,6 +24,7 @@ function App() {
   const [response, setResponse] = useState("");
   const [revenue, setRevenue] = useState("");
   const [operatingIncome, setOperatingIncome] = useState("");
+  const [cashflow, setCashFlow] = useState("");
   const [otherKPIs, setOtherKPIs] = useState("");
   const [files, setFiles] = useState([]);
   const [mdaScore, setmdaScore] = useState(null);
@@ -70,7 +71,7 @@ function App() {
         headers: {
           "Content-Type": "text/plain", // Explicitly declare the content type
         },
-        body: "Revenue analysis. Analyse specifically the revenue of the company and how its changed over time. Calculate implied metrics such as where the revenue has come from. Have a max of 200 words. Use all time frame data and specify where its come from. Calculate and analysis the derivates of the trends if possible and relevant",
+        body: "Revenue analysis. Analyse specifically the revenue and general profit and loss of the company and how its changed over time. Calculate implied metrics such as where the revenue has come from. Have a max of 200 words. Use all time frame data and specify where its come from. Calculate and analysis the derivates of the trends if possible and relevant",
       });
 
       setRevenue("");
@@ -87,7 +88,7 @@ function App() {
         headers: {
           "Content-Type": "text/plain", // Explicitly declare the content type
         },
-        body: "KPIs analysis. Analyse any remaining KPIs. This includes PBT margin, income to cost ratio, gross yield, cost of risk, return on tangible equity, net interest margin. If a KPI isnt explicitly stated, but can be calculated present the calcualted result for each time period possible and analyse how its changed. Do not use latex. If a KPI isnt stated and cannot be calculated to a final quantitative value then ignore it and don't mention it at all! Maximum of 200 words.",
+        body: "KPIs analysis. Analyse any remaining KPIs. This includes PBT margin, income to cost ratio, gross yield, cost of risk, return on tangible equity, net interest margin. If a KPI isnt explicitly stated, but can be calculated present the calcualted result for each time period possible and analyse how its changed. Do not use latex. If a KPI isnt stated and cannot be calculated to a final quantitative value then ignore it and don't mention it at all! Do not mention any of the KPIs I listed if they cannot be calculated. Only present the KPIs that have a value. Maximum of 200 words.",
       });
 
       const revenue_plots_str =
@@ -116,6 +117,25 @@ function App() {
       console.log("Opreq", opIncomeReq);
       console.log("Op", opIncome);
       await gensection(opIncome, setOperatingIncome);
+      setCashFlow("Analysing cash flow...");
+      const cash_flow_analysis = await fetch("http://localhost:8000/prompt/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain", // Explicitly declare the content type
+        },
+        body: "CashFlow analysis. Analyse specifically the cash flow of the company and how its changed over time. Have a max of 200 words. Use all time frame data and specify where its come from.",
+      });
+      const cash_flow_str =
+        "CashFlow plots. Generate the code to create plots that can be used to analyse the cash flow of the company.";
+      const cash_flow_plots = await fetch("http://localhost:8000/plotprompt/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain", // Explicitly declare the content type
+        },
+        body: cash_flow_str,
+      });
+      setCashFlow("");
+      await gensection(cash_flow_analysis, setCashFlow);
       setOtherKPIs("Analysing additional KPIs...");
       const otherKpis = await othersReq;
 
@@ -279,6 +299,19 @@ function App() {
               </Box>
               <Box maxWidth="35%">
                 <Plots isSubmitted={isFinished} context="Operating" />
+              </Box>
+            </Stack>
+            <Stack flexDirection="row">
+              <Box maxWidth="55%">
+                <Typography
+                  sx={{ flexGrow: "auto", whiteSpace: "pre-wrap" }}
+                  dangerouslySetInnerHTML={{ __html: cashflow }}
+                  marginBottom={10}
+                  marginX={2}
+                />
+              </Box>
+              <Box maxWidth="35%">
+                <Plots isSubmitted={isFinished} context="Cash" />
               </Box>
             </Stack>
             <Stack flexDirection="row">

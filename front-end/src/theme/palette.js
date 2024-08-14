@@ -27,6 +27,7 @@ export const am = {
   secondary: "#5c8bb4",
   main: "#0085ca",
   light: "#dee7f0",
+  lighter: "#f2f9fc",
   grey: "#646464",
 };
 
@@ -133,8 +134,8 @@ export function palette(mode) {
       disabled: grey[900],
     },
     background: {
-      paper: alpha(am.main, 0.05),
-      default: am.light,
+      paper: am.lighter,
+      default: alpha(am.light, 0.05),
       neutral: alpha(grey[500], 0.12),
     },
     action: {

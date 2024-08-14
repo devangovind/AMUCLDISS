@@ -75,7 +75,7 @@ model = "gpt-4o"
 class AIModel:
   def __init__(self):
     self.client = AzureOpenAI(api_key=AI_API_KEY, azure_endpoint=AI_ENDPOINT, api_version="2024-05-01-preview")
-    self.assistant = self.client.beta.assistants.create(name="Finance Visualisation", instructions="You are a finance assistant. Your job is to interpret financial documents and provide analysis based on it. Compare to the wider industry where possible. For new lines signify via newline character in python. To make something a title rather than use ###, wrap it in <h3> tags. To make a subtitle/bold, wrap it in **. Don't present any calculations only present the answer. DO NOT USE ANY LaTeX!! There should be NO partial calculations without a final evaluated answer!! All code produced needs to be in a single ``` block. Do not speak in the first person. The data you read from in the vector store will likely be annual or quarterly report so in the analysis take into account the timeframe of the data and specify if its just quarterly. Remember to look at whether the quantitative values are positive or negative (indicated by () or the caption (loss)). When analysing and reading the documents focus on quantitative data.",tools=[{"type": "file_search"}, {"type": "code_interpreter"}],
+    self.assistant = self.client.beta.assistants.create(name="Finance Visualisation", instructions="You are a finance assistant. Your job is to interpret financial documents and provide analysis based on it. Compare to the wider industry where possible. For new lines signify via newline character in python. To make something a title rather than use ###, wrap it in <h3> tags. To make a subtitle/bold, wrap it in **. Don't present any calculations only present the answer. DO NOT USE ANY LaTeX!! There should be NO partial calculations without a final evaluated answer!! All code produced needs to be in a single ``` block. Do not speak in the first person. The data you read from in the vector store will likely be annual or quarterly report so in the analysis take into account the timeframe of the data and specify if its just quarterly. Remember to look at whether the quantitative values are positive or negative (indicated by () or the caption (loss)). When analysing and reading the documents focus on quantitative data. Do not include the citations/sources at all in the response",tools=[{"type": "file_search"}, {"type": "code_interpreter"}],
                                           model="gpt-4o")
     self.chatthread = self.client.beta.threads.create()
     # self.eventhandler = EventHandler()
@@ -144,7 +144,7 @@ class AIModel:
     run = self.client.beta.threads.runs.create_and_poll(
     thread_id=thread.id,
     assistant_id=self.assistant.id,
-    instructions="Analyse the data and use all years/quarters/time quantitative data in the financial statements. When present calculations do not use latex just normal string text. Not using latex also means not wrapping calculations in /"
+    instructions="Analyse the data and use all years/quarters/time quantitative data in the financial statements. When present calculations do not use latex just normal string text. Not using latex also means not wrapping calculations in /."
     )
     # thread = self.client.beta.threads.create(messages = [{"role": "user", "content": "This was a good answer but upadte the dictionary to include all time frame (years, quaters, etc.) data from the financial statements in the dictionary but dont include additional metrics. I literally want the exact same response but guarantee the existing metrics use all the time frame data in all of the documents. Keep all the written section the exact same. Remember do not introduce the dictionary. Keep the analysis the same and keep same structure and format of dictionary!"}])
     # run = self.client.beta.threads.runs.create_and_poll(
@@ -277,7 +277,7 @@ class AIModel:
     run = self.client.beta.threads.runs.create_and_poll(
     thread_id=self.chatthread.id,
     assistant_id=self.assistant.id,
-    instructions="Answer in 100 words maximum. Do not use any latex at all."
+    instructions="Answer in 100 words maximum. Do not use any latex at all! All calculations must be written in plain text"
     )
     if run.status == 'completed': 
       messages = self.client.beta.threads.messages.list(thread_id=self.chatthread.id,)
