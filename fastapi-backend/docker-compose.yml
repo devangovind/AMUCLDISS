@@ -1,6 +1,8 @@
 services:
-  app:
+  api:
     build: .
-    command: uvicorn app.main:app --host 0.0.0.0
+    container_name: "api"
+    volumes:
+      - ./app:/app
     ports:
-      - "8000:8000"
+      - 8000:8000

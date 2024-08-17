@@ -24,7 +24,7 @@ app = FastAPI()
 api_key = os.getenv('AZURE_OPENAI_API_KEY')
 azure_endpoint = os.getenv('AZURE_OPENAI_ENDPOINT')
 api_version = "2023-07-01-preview"
-PLOT_DIR = "fastapi-backend/app/plots"
+PLOT_DIR = "./plots"
 
 if not api_key or not azure_endpoint:
     raise ValueError("AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT must be set in the environment variables")

@@ -232,7 +232,6 @@ function App() {
             files={files}
             setFiles={setFiles}
           />
-          <Chatbot />
           {/* <div className="output-container"> */}
         </>
       )}
