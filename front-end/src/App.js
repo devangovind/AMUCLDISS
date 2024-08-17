@@ -39,7 +39,6 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setResponse("Uploading files..."); // Clear previous response
-    console.log(files);
 
     if (files.length > 0) {
       setSubmitted(true);
@@ -47,10 +46,7 @@ function App() {
       Array.from(files).forEach((file) => {
         formData.append("files", file);
       });
-      console.log(formData);
-      formData.getAll("files").forEach((file) => {
-        console.log(file.name); // Logs the name of each file
-      });
+
       const uploadfiles = await fetch("http://localhost:8000/uploadfiles/", {
         method: "POST",
         body: formData,
@@ -64,6 +60,7 @@ function App() {
         body: "Give a 100 word overview on the company and its financial performance based on the data uploaded to the vector store",
       });
       setResponse("");
+
       await gensection(overview, setResponse);
       setRevenue("Analysing revenue...");
       const revenue_analysis = await fetch("http://localhost:8000/prompt/", {
@@ -113,9 +110,6 @@ function App() {
         body: op_plots_str,
       });
       setOperatingIncome("");
-      console.log("Revenue", revenue_analysis);
-      console.log("Opreq", opIncomeReq);
-      console.log("Op", opIncome);
       await gensection(opIncome, setOperatingIncome);
       setCashFlow("Analysing cash flow...");
       const cash_flow_analysis = await fetch("http://localhost:8000/prompt/", {
@@ -164,16 +158,15 @@ function App() {
         },
         body: "",
       });
-      console.log("mdres", mda_response);
+
       const text = await mda_response.text();
-      console.log(text, text.split(","));
+
       const mda_score = Math.round(
         parseFloat(text.split(",")[0].replace(/"/g, ""), 10)
       );
 
       setmdaScore(isNaN(mda_score) ? null : mda_score);
-      console.log("mada", mdaScore);
-      // console.log(revenue_plots);
+
       // // await gensection(revenue_plots, setOperatingIncome);
       // // const revenue = await fetch("http://localhost:8000/prompt/", {
       // //   method: "POST",
@@ -252,7 +245,6 @@ function App() {
             files={files}
             setFiles={setFiles}
           />
-          <Chatbot />
           {/* <div className="output-container"> */}
         </>
       )}
@@ -273,6 +265,7 @@ function App() {
               dangerouslySetInnerHTML={{ __html: response }}
               marginBottom={10}
               marginX={2}
+              aria-label="response-overview"
             />
             <Stack flexDirection="row">
               <Box maxWidth="55%">

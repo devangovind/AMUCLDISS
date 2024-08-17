@@ -27,10 +27,17 @@ const DragUpload = ({
     const selectedFiles = event.target.files;
     if (selectedFiles && selectedFiles.length > 0) {
       const newFiles = Array.from(selectedFiles);
-      const filesToBeAdded = newFiles.filter((elem) => !files.includes(elem));
-      console.log(newFiles, files, filesToBeAdded, selectedFiles);
-      console.log(typeof files);
-      setFiles((prevFiles) => [...prevFiles, ...filesToBeAdded]);
+      setFiles((prevFiles) => {
+        const existingFiles = new Set(
+          prevFiles.map((file) => file.name + file.size + file.lastModified)
+        );
+        const filesToBeAdded = newFiles.filter(
+          (file) =>
+            !existingFiles.has(file.name + file.size + file.lastModified)
+        );
+
+        return [...prevFiles, ...filesToBeAdded];
+      });
     }
   };
   const handleDrop = (event) => {
@@ -38,18 +45,28 @@ const DragUpload = ({
     const droppedFiles = event.dataTransfer.files;
     if (droppedFiles.length > 0) {
       const newFiles = Array.from(droppedFiles);
-      const filesToBeAdded = newFiles.filter((elem) => !files.includes(elem));
-      setFiles((prevFiles) => [...prevFiles, ...filesToBeAdded]);
+      setFiles((prevFiles) => {
+        const existingFiles = new Set(
+          prevFiles.map((file) => file.name + file.size + file.lastModified)
+        );
+        const filesToBeAdded = newFiles.filter(
+          (file) =>
+            !existingFiles.has(file.name + file.size + file.lastModified)
+        );
+
+        return [...prevFiles, ...filesToBeAdded];
+      });
     }
   };
 
   const handleRemoveFile = (index) => {
     setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+    document.getElementById("file-input").value = "";
   };
 
-  useEffect(() => {
-    onFilesSelected && onFilesSelected(files);
-  }, [files, onFilesSelected]);
+  // useEffect(() => {
+  //   onFilesSelected && onFilesSelected(files);
+  // }, [files, onFilesSelected]);
 
   return (
     <DragDropBox
@@ -74,12 +91,12 @@ const DragUpload = ({
         <input
           type="file"
           hidden
-          id="browse"
+          id="file-input"
           onChange={handleFileChange}
           accept=".pdf,.docx,.pptx,.txt,.xlsx"
           multiple
         />
-        <label htmlFor="browse">Browse files</label>
+        <label htmlFor="file-input">Browse files</label>
       </Box>
 
       {files.length > 0 && (

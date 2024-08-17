@@ -31,13 +31,7 @@ const Mdascore = ({ score }) => {
       <svg height="80" width="80">
         <circle r="25" cx="40" cy="40" fill={scoreColor}></circle>
 
-        <text
-          x="50%"
-          y="57%"
-          text-anchor="middle"
-          fill="white"
-          font-size="20px"
-        >
+        <text x="50%" y="57%" textAnchor="middle" fill="white" fontSize="20px">
           {score}
         </text>
       </svg>

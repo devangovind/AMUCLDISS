@@ -24,9 +24,10 @@ const DownloadButton = () => {
     if (response.ok) {
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
+      // creating an <a> element forced to have the download as its href then forcing it to be clicked
       const a = document.createElement("a");
       a.href = url;
-      a.download = "analysis.pptx"; // The default filename for the downloaded file
+      a.download = "analysis.pptx";
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -44,20 +45,8 @@ const DownloadButton = () => {
       }}
       variant="contained"
       onClick={handleDownload}
+      aria-label="download-button"
     >
-      {/* <svg height="100" width="100">
-        <circle r="30" cx="50" cy="50" fill="#265079"></circle>
-
-        <text
-          x="50%"
-          y="57%"
-          text-anchor="middle"
-          fill="white"
-          font-size="25px"
-        >
-          DL
-        </text>
-      </svg> */}
       <Typography fontSize="xl" paddingY={1.75}>
         DL
       </Typography>
