@@ -82,24 +82,6 @@ def get_openai_generator(prompt: str):
         logger.error(f"Error during OpenAI streaming: {e}")
         yield f"data: Error occurred: {str(e)}\n\n"
 
-@app.get('/stream')
-async def stream(request: Request, prompt: str):
-    if not prompt:
-        raise HTTPException(status_code=400, detail="Prompt is required")
-    generator = get_openai_generator(prompt)
-    return StreamingResponse(generator, media_type='text/event-stream')
-
-
-@app.post("/test/")
-async def test(request: Request):
-    # Reading the request body as a string
-    data = await request.body()
-    message = data.decode('utf-8')  # Assuming the text is UTF-8 encoded
-    print(message)
-    return {"message": "received"}
-
-
-
 
 def streamed_res(content):
     chunks = 3000
@@ -171,29 +153,6 @@ def gen_plots(code):
     plt.close()
     return filepath
 
-# def gen_plots2(code):
-#     try:
-#         kpi_dict = {}
-#         try:
-#             exec(code, {}, kpi_dict)
-#         except Exception as e:
-#             print(e)
-#             return
-#         def find_dict(local_v):
-#             return {k: v for k,v in local_v.items() if isinstance(v, dict)}
-#         kpis = find_dict(kpi_dict)
-#         kpis = kpis["kpis"]
-#         try:
-#             years = kpis["time"]
-#             kpis.pop("time")
-#         except:
-#             years = kpis["Time"]
-#             kpis.pop("Time")
-#         gen_plots3(years, kpis)
-#     except Exception as e:
-#         print("outer", e)
-#         # exec(code, {}, kpi_dict)
-#         return
 def gen_plots2(code):
     try:
         exec(code)
@@ -245,10 +204,10 @@ class Model:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(Model, cls).__new__(cls)
-            cls._instance.model = AIModel()  # Initialize your AI model here
+            cls._instance.model = AIModel()  
         return cls._instance
     def create_vector_store(self, file_paths):
-        self.model.add_vector_store(file_paths)
+        self.model.create_vector_store(file_paths)
         return True
     def ask_prompt(self, prompt, instructions=""):
         return self.model.analyse2(prompt=prompt, instructions=instructions)
@@ -283,25 +242,17 @@ async def upload_files(files: List[UploadFile] = File(...)):
 
     for file in files:
         contents = await file.read()
-        file_contents.append(contents)
+        file_contents.append(contents) #remove line???
         with open(f'saved_files/{file.filename}', 'wb') as f:
             f.write(contents)
-        print(file.filename)
         
         if "xlsx" in file.filename:
             sheets_dict = pd.read_excel(f'saved_files/{file.filename}', sheet_name=None)
             for name, sheet in sheets_dict.items():   
                 sheet.to_csv(f'saved_files/{name}.txt', '|', index = None, header=True)
-            # #replace file.filename to name to go back to old implementation
-            # with open(f'saved_files/{file.filename[:-5]}.txt', 'wb') as f:
-            #     f.write(contents)
-            # excel_names.append(f'saved_files/{file.filename[:-5]}.txt')
                 excel_names.append(f'saved_files/{name}.txt')
-            # print("excel", file.filename[:-5])
     file_paths = [f"saved_files/{file.filename}" for file in files if "xlsx" not in file.filename]
     file_paths.extend(excel_names)
-    print(excel_names)
-    print(file_paths)
     model.create_vector_store(file_paths)
     return True
 
@@ -312,11 +263,7 @@ async def ask_prompt(request: Request):
     model = Model()
     ppt = PPT()
     ppt_slide = prompt_text.split()[0]
-    
     res = model.ask_prompt(prompt_text)
-    # code_part = parse_code(res)
-    # if code_part:
-    #     await gen_plots2(code_part)
     ppt.update_slide(ppt_slide.lower(),ppt_slide.lower(), res)
     return StreamingResponse(streamed_res(format_to_html(res)), media_type='text/event-stream')
 

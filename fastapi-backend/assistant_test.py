@@ -79,15 +79,13 @@ class AIModel:
                                           model="gpt-4o")
     self.chatthread = self.client.beta.threads.create()
     # self.eventhandler = EventHandler()
-  def add_vector_store(self, file_paths):
+  def create_vector_store(self, file_paths):
     self.vector_store = self.client.beta.vector_stores.create(name="Financial Statements")
     file_streams = [open(path, "rb") for path in file_paths]
     file_batch = self.client.beta.vector_stores.file_batches.upload_and_poll(vector_store_id=self.vector_store.id, files=file_streams)
     print(file_paths)
     print(file_streams)
-    print(self.assistant)
     self.assistant = self.client.beta.assistants.update(assistant_id =self.assistant.id, tool_resources={"file_search":{"vector_store_ids":[self.vector_store.id]}})
-    print(self.assistant)
     self.thread = self.client.beta.threads.create()
   def analyse(self, instructions=None, messages=None):
     # and plot the data. Also pick out other key KPIs from the report such as PBT margin, income to cost ratio, gross yield 
@@ -360,14 +358,14 @@ class AIModel:
     return "Error in prompt"
      
      
-if __name__ == "__main__":
-   model = AIModel()
-  #  with open("saved_files/Amazon-2022-Annual-Report.pdf") as f:
-  #     print(f)
-   file_path = ["Ash_Random/2/fastapi-backend/saved_files/Amazon-2022-Annual-Report.pdf"]
-   file_path = ["Ash_Random/2/fastapi-backend/saved_files/goog023-alphabet-2023-annual-report-web-1.pdf"]
-   model.add_vector_store(file_path)
-   time.sleep(5)
+# if __name__ == "__main__":
+#    model = AIModel()
+#   #  with open("saved_files/Amazon-2022-Annual-Report.pdf") as f:
+#   #     print(f)
+#    file_path = ["Ash_Random/2/fastapi-backend/saved_files/Amazon-2022-Annual-Report.pdf"]
+#    file_path = ["Ash_Random/2/fastapi-backend/saved_files/goog023-alphabet-2023-annual-report-web-1.pdf"]
+#    model.add_vector_store(file_path)
+#    time.sleep(5)
 
 
-   print(model.analyse2(prompt="What is the name of the company presented in the files uplaoded (and wh7at are the files named) and explain why you know this is correct. Give the source"))
+#    print(model.analyse2(prompt="What is the name of the company presented in the files uplaoded (and wh7at are the files named) and explain why you know this is correct. Give the source"))
