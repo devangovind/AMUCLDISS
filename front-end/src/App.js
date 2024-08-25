@@ -71,7 +71,7 @@ function App() {
         headers: {
           "Content-Type": "text/plain", // Explicitly declare the content type
         },
-        body: "Revenue analysis. Analyse specifically the revenue and general profit and loss of the company and how its changed over time. Calculate implied metrics such as where the revenue has come from. Have a max of 200 words. Use all time frame data and specify where its come from. Calculate and analysis the derivates of the trends if possible and relevant",
+        body: "Revenue analysis. Analyse specifically the revenue not the operating income and general profit and loss of the company and how its changed over time. Calculate implied metrics such as where the revenue has come from. Have a max of 200 words. Use all time frame data and specify where its come from. Calculate and analysis the derivates of the trends if possible and relevant",
       });
 
       setRevenue("");
@@ -253,6 +253,10 @@ function App() {
             setFiles={setFiles}
           />
           <Chatbot />
+          <Box sx={{ position: "fixed", left: 24, bottom: 5 }}>
+            <DownloadButton />
+          </Box>
+
           {/* <div className="output-container"> */}
         </>
       )}

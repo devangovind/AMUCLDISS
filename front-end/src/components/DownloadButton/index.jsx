@@ -1,14 +1,17 @@
 import {
+  alpha,
   Box,
   Button,
   Card,
   Container,
+  IconButton,
   Input,
   Stack,
   Typography,
   useTheme,
 } from "@mui/material";
 import { useEffect, useState } from "react";
+import Iconify from "../Iconify";
 
 const DownloadButton = () => {
   const handleDownload = async () => {
@@ -37,31 +40,17 @@ const DownloadButton = () => {
   };
   const theme = useTheme();
   return (
-    <Button
+    <IconButton
       sx={{
         borderRadius: "1000px",
-        backgroundColor: theme.palette.am.main,
+        backgroundColor: theme.palette.am.dark,
+        ":hover": { backgroundColor: alpha(theme.palette.am.main, 0.5) },
+        boxShadow: "0px 0px 10px 1px rgba(0,0,0,0.5);",
       }}
-      variant="contained"
       onClick={handleDownload}
     >
-      {/* <svg height="100" width="100">
-        <circle r="30" cx="50" cy="50" fill="#265079"></circle>
-
-        <text
-          x="50%"
-          y="57%"
-          text-anchor="middle"
-          fill="white"
-          font-size="25px"
-        >
-          DL
-        </text>
-      </svg> */}
-      <Typography fontSize="xl" paddingY={1.75}>
-        DL
-      </Typography>
-    </Button>
+      <Iconify icon="material-symbols:download" width={40} color="white" />
+    </IconButton>
   );
 };
 

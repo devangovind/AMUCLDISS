@@ -43,32 +43,6 @@ load_dotenv(dotenv_path)
 AI_API_KEY = os.getenv("AI_API_KEY")
 AI_ENDPOINT = os.getenv("AI_ENDPOINT")
 
-# client = AzureOpenAI(api_key=AI_API_KEY, azure_endpoint=AI_ENDPOINT, api_version="2024-02-01")
-
-# response = client.chat.completions.create(model="gpt-35-turbo", messages=[{"role": "user", "content": "Who is the current UK prime minister?"}] )
-# print(response)
-# print(response.choices[0].message.content)
-# class EventHandler(AssistantEventHandler):
-#   @override
-#   def on_text_created(self, text) -> None:
-#     yield (f"\nassistant > ", flush=True)
-      
-#   @override
-#   def on_text_delta(self, delta, snapshot):
-#     yield (delta.value, end="", flush=True)
-      
-#   def on_tool_call_created(self, tool_call):
-#     yield (f"\nassistant > {tool_call.type}\n", flush=True)
-  
-#   def on_tool_call_delta(self, delta, snapshot):
-#     if delta.type == 'code_interpreter':
-#       if delta.code_interpreter.input:
-#         yield (delta.code_interpreter.input, end="", flush=True)
-#       if delta.code_interpreter.outputs:
-#         yield (f"\n\noutput >", flush=True)
-#         for output in delta.code_interpreter.outputs:
-#           if output.type == "logs":
-#             yield (f"\n{output.logs}", flush=True)
 api_version = "2024-05-01-preview"
 model = "gpt-4o"
 
@@ -78,13 +52,11 @@ class AIModel:
     self.assistant = self.client.beta.assistants.create(name="Finance Visualisation", instructions="You are a finance assistant. Your job is to interpret financial documents and provide analysis based on it. Compare to the wider industry where possible. For new lines signify via newline character in python. To make something a title rather than use ###, wrap it in <h3> tags. To make a subtitle/bold, wrap it in **. Don't present any calculations only present the answer. DO NOT USE ANY LaTeX!! There should be NO partial calculations without a final evaluated answer!! All code produced needs to be in a single ``` block. Do not speak in the first person. The data you read from in the vector store will likely be annual or quarterly report so in the analysis take into account the timeframe of the data and specify if its just quarterly. Remember to look at whether the quantitative values are positive or negative (indicated by () or the caption (loss)). When analysing and reading the documents focus on quantitative data. Do not include the citations/sources at all in the response",tools=[{"type": "file_search"}, {"type": "code_interpreter"}],
                                           model="gpt-4o")
     self.chatthread = self.client.beta.threads.create()
-    # self.eventhandler = EventHandler()
+    self.threads_dict = {}
   def create_vector_store(self, file_paths):
     self.vector_store = self.client.beta.vector_stores.create(name="Financial Statements")
     file_streams = [open(path, "rb") for path in file_paths]
     file_batch = self.client.beta.vector_stores.file_batches.upload_and_poll(vector_store_id=self.vector_store.id, files=file_streams)
-    print(file_paths)
-    print(file_streams)
     self.assistant = self.client.beta.assistants.update(assistant_id =self.assistant.id, tool_resources={"file_search":{"vector_store_ids":[self.vector_store.id]}})
     self.thread = self.client.beta.threads.create()
   def analyse(self, instructions=None, messages=None):
@@ -94,9 +66,6 @@ class AIModel:
                                                          {"role":"user", "content":"Analyse the revenue of the company and how it has changed over time. Use all data possible to give most in depth analysis and changes over time and specify if some data is only quarterly vs annual. Also pick out other key KPIs from the report such as PBT margin, income to cost ratio, gross yield, cost of risk, return on tangible equity, net interest margin for all years available. Discuss how theyve changed year on year/quarter. If any of the KPIs arent explicitly mentioned but can be calculated or derived, calculate the value and include it in the KPI dictionary.  \
                                                           If a KPI cant be calcualted and isnt stated, then completely ignore it and DON'T include it in the response. When completing a calculation only show the final answer as latex will not show up properly in HTML. The KPIs should be section headers. Start with an overall overview and then go into specifics of the answer. In the overview explain whether the changes have been positive or negative. Compare to the metrics to the wider industry. Produce code to store the KPIs in a dictionary called 'kpis'. The first key/value pair must be time: [years/quarters/dates]. \
                                                           Specify if the dates are based on annual or quarterly. The other key/value pairs should take the form of metric: [time interval values]. Name the metrics as if they were to be plotted with units e.g. Revenue (in millions) USD. Don't assume any KPIs, only quantitative data. Also don't have calculations as the values in the dictionary, evaluate the result and store the value as int/float. In the explanation of revenue break down where its come from (which operations and regions) and how that changed over time"}])
-    # with self.client.beta.threads.runs.stream(thread_id=thread.id, assistant_id=self.assistant.id) as stream: 
-      
-    #   stream.until_done()
     run = self.client.beta.threads.runs.create_and_poll(
     thread_id=thread.id,
     assistant_id=self.assistant.id,
@@ -132,7 +101,14 @@ class AIModel:
   #   self.thread =self.client.beta.threads.create(messages = [{"role":"assistant", "content":"To make something a title rather than use ###, wrap it in <h3> tags. To make a subtitle/bold, wrap it in **. USE NEWLINE CHARACTERS TO BREAK UP DIFFERENT SECTIONS!!!!. Additionally this is going to be displayed on a webpage so using special formatting for code etc. shouldnt be used. Don't present any calculations only present the answer. KPIs not shown explicitily but can be calculated should be. All code produced for plots needs to be in a single ``` block (not block per section). DO NOT USE ANY LaTeX!!. Don't speak in the first person."}])
     
   def analyse2(self, instructions="", prompt=None, reattempted=False):
-    thread = self.client.beta.threads.create(messages = [{"role": "user", "content": prompt}])
+    thread_key = prompt.split()[0]
+    if thread_key not in self.threads_dict:
+      thread = self.client.beta.threads.create(messages = [{"role": "user", "content": prompt}])
+      self.threads_dict[thread_key] = thread.id
+      thread_id = thread.id
+    else:
+      thread_id = self.threads_dict[thread_key]
+      message = self.client.beta.threads.messages.create(thread_id=thread_id, role="user", content=prompt)
     # message = self.client.beta.threads.messages.create(thread_id=self.thread.id, role="user", content=prompt)
     # run = self.client.beta.threads.runs.create_and_poll(
     # thread_id=thread.id,
@@ -140,7 +116,7 @@ class AIModel:
     # instructions=f"Analyse the data and at the end use all years/quarters/time quantitative data in the financial statements to create a python dictionary called kpis with a key called time. Segment related data should be grouped in nested dictionary. USE ALL THE TIME FRAME DATA PRESENTED IN THE UPLOADED DOCUMENTS. Annual reports typically contain 2 or 3 years of quantitative data. Do not introduce the dictionary. {instructions}"
     # )
     run = self.client.beta.threads.runs.create_and_poll(
-    thread_id=thread.id,
+    thread_id=thread_id,
     assistant_id=self.assistant.id,
     instructions="Analyse the data and use all years/quarters/time quantitative data in the financial statements. When present calculations do not use latex just normal string text. Not using latex also means not wrapping calculations in /."
     )
@@ -151,7 +127,7 @@ class AIModel:
     # instructions=""
     # )
     if run.status == 'completed': 
-      messages = self.client.beta.threads.messages.list(thread_id=thread.id)
+      messages = self.client.beta.threads.messages.list(thread_id=thread_id)
 
       
       if messages.data:
@@ -167,8 +143,8 @@ class AIModel:
                   img.show()
               if hasattr(message_content, "text"):
                  value = message_content.text.value
-          print("message_data analyse", messages.data)
-          print(messages.data[0].content[0].text)
+          # print("message_data analyse", messages.data)
+          # print(messages.data[0].content[0].text)
           # return value
 
           return messages.data[0].content[0].text.value.replace("\n\n", "\n")
@@ -183,7 +159,12 @@ class AIModel:
 
 
   def plots(self, instructions="", prompt=None, reattempted=False):
-    thread = self.client.beta.threads.create(messages = [{"role": "user", "content": prompt}])
+    thread_key = prompt.split()[0]
+    if thread_key not in self.threads_dict:
+      thread = self.client.beta.threads.create(messages = [{"role": "user", "content": prompt}])
+    else:
+      thread = self.threads_dict[thread_key]
+      message = self.client.beta.threads.messages.create(thread_id=thread.id, role="user", content=prompt)
     # message = self.client.beta.threads.messages.create(thread_id=self.thread.id, role="user", content=prompt)
     instructions = "Generate a dictionary called 'kpis'. There should be one key called 'Time' which has value of the timeframes present in the report. The other keys should be the metrics in the prompt. If a metric is broken down by sector/segment, include the segment/sector inside a nested dictionary. Make the format for a segment broken down metric: [{sector1: [value1, value2..], sector2:[value1...]}]. Do not give the segments their own keys outside of the nested dictioanry. Name the metrics appropriately as they will be the titles of the plots"
     run = self.client.beta.threads.runs.create_and_poll(
@@ -226,11 +207,19 @@ class AIModel:
     return "Error in analysis"
 
   def plots2(self, instructions="", prompt=None, reattempted=False):
-    thread = self.client.beta.threads.create(messages = [{"role": "user", "content": prompt}])
+    thread_key = prompt.split()[0]
+    if thread_key not in self.threads_dict:
+      thread = self.client.beta.threads.create(messages = [{"role": "user", "content": prompt}])
+      self.threads_dict[thread_key] = thread.id
+      thread_id = thread.id
+    else:
+      print("here threads", self.threads_dict, thread_key)
+      thread_id = self.threads_dict[thread_key]
+      message = self.client.beta.threads.messages.create(thread_id=thread_id, role="user", content=prompt)
     # message = self.client.beta.threads.messages.create(thread_id=self.thread.id, role="user", content=prompt)
-    instructions = "Generate matplotlib python code to plot the trends in the data for the given metric. Include in the code the saving of the plot as a static image in the ./plots folder with an appropriate name. Metrics broken down into segments should all be on a single plot. Use all time frame data in the plots. Don't include plt.show() in the code. The x-axis should ONLY have labels for the xaxis points with data! If data is not avaiable/cannot be calculated DO NOT make up fake data, just ignore the plot completely!"
+    instructions = "Generate matplotlib python code to plot the trends in the data for the given metric. Include in the code the saving of the plot as a static image in the ./plots folder with an appropriate name. The folder has already been created. Do not run and save the file directly, only generate the code to do so. Metrics broken down into segments should all be on a single plot. Use all time frame data in the plots. Don't include plt.show() in the code. The x-axis should ONLY have labels for the xaxis points with data! If data is not avaiable/cannot be calculated DO NOT make up fake data, just ignore the plot completely! If your previous response did not include a metric, do not include it as a plot"
     run = self.client.beta.threads.runs.create_and_poll(
-    thread_id=thread.id,
+    thread_id=thread_id,
     assistant_id=self.assistant.id,
     instructions=instructions
     )
@@ -241,28 +230,29 @@ class AIModel:
     # instructions=""
     # )
     if run.status == 'completed': 
-      messages = self.client.beta.threads.messages.list(thread_id=thread.id)
+      messages = self.client.beta.threads.messages.list(thread_id=thread_id)
 
 
       file_names = []
       if messages.data:
-          for message in reversed(messages.data):
+          for message in messages.data:
             for message_content in message.content:
 
               if hasattr(message_content, "image_file"):
+                continue
                 file_id = message_content.image_file.file_id
                 resp = self.client.files.with_raw_response.content(file_id)
                 if resp.status_code == 200:
                   image_data = BytesIO(resp.content)
                   img = Image.open(image_data)
               if hasattr(message_content, "text"):
-                 value = message_content.text.value
-
-          return value
+                value = message_content.text.value
+                print("code value", messages.data, value)
+                return value
     if run.status == "failed" and not reattempted:
 
         time.sleep(40)
-        return self.plots(prompt=prompt, reattempted=True)
+        return self.plots2(prompt=prompt, reattempted=True)
 
     print(run.status)
     print(run)
@@ -325,7 +315,7 @@ class AIModel:
 
     if run.status == 'completed': 
       messages = self.client.beta.threads.messages.list(thread_id=thread.id)
-      print(messages)
+
       
       if messages.data:
           # return value

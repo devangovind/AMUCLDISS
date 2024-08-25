@@ -16,7 +16,7 @@ class CreatePPT:
             if shape.has_text_frame and shape.text:
                 text_boxes.append(shape.text)
         return text_boxes
-    def parse_content(self, content):
+    def format_content(self, content):
         text = re.sub(r'### (.+)', r'\1', content)
         # Replace bold text denoted by '**'
         text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
@@ -32,7 +32,7 @@ class CreatePPT:
             slide = self.presentation.slides[self.content_to_slide_dict[slide]]
         except:
             return
-        content = self.parse_content(content)
+        content = self.format_content(content)
         print("\n", content)
         for shape in slide.shapes:
             if shape.has_text_frame and shape.text:
