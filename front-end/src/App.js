@@ -252,10 +252,6 @@ function App() {
             files={files}
             setFiles={setFiles}
           />
-          <Chatbot />
-          <Box sx={{ position: "fixed", left: 24, bottom: 5 }}>
-            <DownloadButton />
-          </Box>
 
           {/* <div className="output-container"> */}
         </>
@@ -263,7 +259,7 @@ function App() {
       {isSubmitted && (
         <>
           {isFinished && (
-            <Box sx={{ position: "fixed", left: 5, bottom: 5 }}>
+            <Box sx={{ position: "fixed", left: 24, bottom: 5 }}>
               <DownloadButton />
             </Box>
           )}
