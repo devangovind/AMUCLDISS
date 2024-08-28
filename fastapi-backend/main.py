@@ -157,7 +157,7 @@ def gen_plots2(code):
     try:
         exec(code)
     except Exception as e:
-        print(code, e)
+        print("genplots exception", code, e)
 
 
 def gen_plots3(years, data):
@@ -275,6 +275,7 @@ async def ask_plots(request: Request):
     model = Model()
     res = model.plot_prompt(prompt_text)
     code_part = parse_code(res)
+    print("parssed code", code_part)
     gen_plots2(code_part)
     ppt = PPT()
     ppt.add_images(ppt_slide.lower(),ppt_slide.lower())
