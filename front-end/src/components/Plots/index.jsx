@@ -2,7 +2,6 @@ import { Box, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
 function Plots({ isSubmitted, context }) {
-  console.log(context);
   const [images, setImages] = useState([]);
 
   useEffect(() => {
@@ -17,7 +16,6 @@ function Plots({ isSubmitted, context }) {
       })
       .catch((error) => console.error("Error fetching images:", error));
   }, [isSubmitted]);
-  console.log(images);
   return (
     <Box maxWidth="100%">
       {images.map((url, index) => (

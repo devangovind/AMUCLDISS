@@ -15,6 +15,7 @@ import re
 from collections import defaultdict
 import pandas as pd
 from presentation_create import CreatePPT
+import datetime
 
 
 load_dotenv()
@@ -156,6 +157,7 @@ def gen_plots(code):
 def gen_plots2(code):
     try:
         exec(code)
+        return
     except Exception as e:
         print("genplots exception", code, e)
 
@@ -211,8 +213,10 @@ class Model:
         return True
     def ask_prompt(self, prompt, instructions=""):
         return self.model.analyse2(prompt=prompt, instructions=instructions)
+    def ask_metric(self, metric, instructions=""):
+        return self.model.analyse3(metric=metric, instructions=instructions)
     def plot_prompt(self, prompt):
-        return self.model.plots2(prompt=prompt)
+        return self.model.plots2(metric=prompt)
     def ask_chat_prompt(self, prompt):
         return self.model.chat_prompt(prompt=prompt)
     def mda_score(self):
@@ -263,7 +267,9 @@ async def ask_prompt(request: Request):
     model = Model()
     ppt = PPT()
     ppt_slide = prompt_text.split()[0]
-    res = model.ask_prompt(prompt_text)
+    print("pre", datetime.datetime.now())
+    res = model.ask_metric(prompt_text)
+    print("post", datetime.datetime.now())
     ppt.update_slide(ppt_slide.lower(),ppt_slide.lower(), res)
     return StreamingResponse(streamed_res(format_to_html(res)), media_type='text/event-stream')
 

@@ -5,9 +5,25 @@ import re
 
 class CreatePPT:
     def __init__(self):
-        self.presentation = pptx.Presentation(os.path.join("pres", "template.pptx"))
-        self.content_to_slide_dict = {"revenue": 1, "operatingincome": 2, "cashflow": 3,"kpis": 4}
+        self.presentation = pptx.Presentation(os.path.join("fastapi-backend/pres", "templatelayout.pptx"))
+        self.content_to_slide_dict = {}
         self.outputpath = os.path.join("pres", "output.pptx")
+    
+    def update_title(self, title):
+        slide = self.presentation.slides[0]
+        slide.shapes.title.text = title
+        self.presentation.save(self.outputpath)
+
+        
+
+    def add_content(self, title, content):
+        slide = self.presentation.slides.add_slide(self.presentation.slide_layouts[1])
+        slide.shapes.title.text = title
+        slide.placeholders[1].text = content
+        text_frame = slide.placeholders[1].text_frame
+        text_frame.word_wrap = True
+        self.presentation.save(self.outputpath)
+
     
     def list_text_boxes(self, slide_num):
         slide = self.presentation.slides[slide_num]
@@ -93,6 +109,8 @@ class CreatePPT:
 
         self.presentation.save(self.outputpath)
         return 
-# if __name__ == "__main__":
-#     # print(os.path.join("pres", "input.pptx"))
-#     ppt = CreatePPT()
+if __name__ == "__main__":
+    # print(os.path.join("pres", "input.pptx"))
+    ppt = CreatePPT()
+    # print(ppt.update_title("n"))
+    ppt.add_content("test", "conent")

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { chipLabels } from "./metrics";
 // import { AiOutlineCheckCircle, AiOutlineCloudUpload } from "react-icons/ai";
 // import { MdClear } from "react-icons/md";
 // import "./DragUpload.css";
@@ -7,21 +8,29 @@ import {
   Button,
   ButtonBase,
   Card,
+  Checkbox,
+  Chip,
   Divider,
+  FormControlLabel,
+  IconButton,
+  Input,
   Stack,
   Typography,
   alpha,
   styled,
 } from "@mui/material";
+import Iconify from "../Iconify";
 const DragUpload = ({
   onFilesSelected,
-  width,
-  height,
   onSubmit,
   files,
   setFiles,
+  selectedChips,
+  setSelectedChips,
 }) => {
-  //   const [files, setFiles] = useState([]);
+  const [additionalMetric, setAdditionalMetric] = useState("");
+  const [sendDisabled, setsendDisabled] = useState(true);
+  const [chips, setChips] = useState(chipLabels);
 
   const handleFileChange = (event) => {
     const selectedFiles = event.target.files;
@@ -50,6 +59,38 @@ const DragUpload = ({
   useEffect(() => {
     onFilesSelected && onFilesSelected(files);
   }, [files, onFilesSelected]);
+
+  useEffect(() => {
+    if (additionalMetric.trim() === "") {
+      setsendDisabled(true);
+    } else {
+      setsendDisabled(false);
+    }
+  }, [additionalMetric]);
+
+  const _handleInputChange = (e) => {
+    setAdditionalMetric(e.target.value);
+  };
+  const addMetric = () => {
+    const newMetric = additionalMetric.trim().toLowerCase();
+    console.log(chips, additionalMetric, newMetric);
+    const metricAsChip = { key: newMetric, label: additionalMetric };
+    console.log(chips.includes(metricAsChip));
+    const chipExists = chips.some((item) => item.key === newMetric);
+    if (chipExists) {
+      const chipSelected = selectedChips.some((item) => item.key === newMetric);
+      if (chipSelected) {
+        setSelectedChips((prev) => [...prev, metricAsChip]);
+      }
+    } else {
+      setChips((prev) => [
+        ...prev,
+        { key: newMetric, label: additionalMetric },
+      ]);
+      setSelectedChips((prev) => [...prev, metricAsChip]);
+    }
+    setAdditionalMetric("");
+  };
 
   return (
     <DragDropBox
@@ -112,9 +153,62 @@ const DragUpload = ({
       )}
 
       {files.length > 0 && (
-        <Box justifyContent="center" display="flex">
-          <Stack flexDirection="column">
-            <p>{files.length} file(s) selected</p>
+        <Box
+          justifyContent="center"
+          display="flex"
+          maxWidth="60%"
+          sx={{ margin: "0 auto" }}
+        >
+          <Stack flexDirection="column" justifyContent="center">
+            <Typography
+              variant="subtitle"
+              justifyContent="center"
+              display="flex"
+            >
+              {files.length} file(s) selected
+            </Typography>
+            <Typography variant="h5" justifyContent="center" display="flex">
+              Metrics for analysis:
+            </Typography>
+            <ChipsWithCheckboxGroup
+              chips={chips}
+              selectedChips={selectedChips}
+              setSelectedChips={setSelectedChips}
+            />
+            <Typography
+              variant="subtitle"
+              justifyContent="center"
+              display="flex"
+            >
+              Additional metrics:
+            </Typography>
+            <Stack
+              flexDirection="row"
+              justifyContent="space-between"
+              paddingY={0.5}
+              alignItems="center"
+            >
+              <Input
+                placeholder="Add additional metrics"
+                variant="contained"
+                multiline={true}
+                sx={{
+                  width: "80%",
+                  marginLeft: "20px",
+                }}
+                value={additionalMetric}
+                onChange={_handleInputChange}
+                // disabled={inputDisabled}
+              />
+
+              <IconButton
+                onClick={() => addMetric()}
+                disabled={sendDisabled}
+                sx={{ marginRight: "10px" }}
+              >
+                <Iconify icon="bi:send-fill" />
+              </IconButton>
+            </Stack>
             <Button onClick={onSubmit} variant="contained">
               Submit
             </Button>
@@ -138,5 +232,74 @@ const DragDropBox = styled(Card)(({ theme }) => ({
   borderStyle: "dashed",
   borderColor: theme.palette.am.main,
 }));
+
+const ChipsWithCheckboxGroup = ({ chips, selectedChips, setSelectedChips }) => {
+  const chipsOrder = chips.map((item) => item.key);
+  const handleToggleChip = (key) => {
+    const chipSelected = selectedChips.some((item) => item.key === key);
+    setSelectedChips((prevSelectedChips) =>
+      prevSelectedChips.includes(key)
+        ? prevSelectedChips.filter((chip) => chip !== key)
+        : [...prevSelectedChips, key]
+    );
+    setSelectedChips((prevSelectedChips) =>
+      prevSelectedChips.sort((a, b) => {
+        let indexA = chipsOrder.indexOf(a);
+        let indexB = chipsOrder.indexOf(b);
+
+        if (indexA === -1 && indexB === -1) {
+          return 0;
+        } else if (indexA === -1) {
+          return 1;
+        } else if (indexB === -1) {
+          return -1;
+        } else {
+          return indexA - indexB;
+        }
+      })
+    );
+  };
+
+  return (
+    <Box sx={{ maxWidth: "70%", margin: "0 auto" }}>
+      <Stack
+        flexDirection="row"
+        flexWrap="wrap"
+        justifyContent="center"
+        gap={2}
+      >
+        {chips.map((item) => (
+          <CustomChips
+            key={item.key}
+            label={item.label}
+            isSelected={selectedChips.includes(item.key)}
+            onToggle={() => handleToggleChip(item.key, item.label)}
+          />
+        ))}
+      </Stack>
+    </Box>
+  );
+};
+
+const CustomChips = ({ key, label, isSelected, onToggle }) => {
+  return (
+    <Chip
+      label={
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={isSelected}
+              onChange={onToggle}
+              color="primary"
+            />
+          }
+          label={label}
+        />
+      }
+      variant={isSelected ? "default" : "outlined"}
+      onClick={onToggle}
+    />
+  );
+};
 
 export default DragUpload;
