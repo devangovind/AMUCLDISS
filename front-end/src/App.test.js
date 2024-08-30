@@ -101,7 +101,7 @@ test("allows for file upload", () => {
   expect(uploadInput.files).toHaveLength(1);
 });
 
-test("doesn't allows for multiple files to be uploaded", () => {
+test("allows for multiple files to be uploaded", () => {
   const currDate = Date.now();
   const files = [
     new File(["testfile1"], "test.pdf", {
