@@ -172,12 +172,6 @@ class AIModel:
     assistant_id=self.assistant.id,
     instructions="Analyse the data and use all years/quarters/time quantitative data in the financial statements. When present calculations do not use latex just normal string text. Not using latex also means not wrapping calculations in /."
     )
-    # thread = self.client.beta.threads.create(messages = [{"role": "user", "content": "This was a good answer but upadte the dictionary to include all time frame (years, quaters, etc.) data from the financial statements in the dictionary but dont include additional metrics. I literally want the exact same response but guarantee the existing metrics use all the time frame data in all of the documents. Keep all the written section the exact same. Remember do not introduce the dictionary. Keep the analysis the same and keep same structure and format of dictionary!"}])
-    # run = self.client.beta.threads.runs.create_and_poll(
-    # thread_id=thread.id,
-    # assistant_id=self.assistant.id,
-    # instructions=""
-    # )
     if run.status == 'completed': 
       messages = self.client.beta.threads.messages.list(thread_id=thread_id)
 

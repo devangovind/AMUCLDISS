@@ -34,7 +34,6 @@ const Response = ({ metrics, setSubmitted }) => {
       console.log("prev", metric, responses, date.getTime());
       const response = await responses[i]; // Wait for the response of the current metric
       console.log("curr", metric, date.getTime());
-      setFinishedResponses((prev) => ({ ...prev, [metric]: true }));
       await fetch("http://localhost:8000/plotprompt/", {
         method: "POST",
         headers: {
@@ -42,6 +41,7 @@ const Response = ({ metrics, setSubmitted }) => {
         },
         body: metric,
       });
+      setFinishedResponses((prev) => ({ ...prev, [metric]: true }));
       console.log("curr post plot", metric, date.getTime());
       await gensection(response, metric);
       console.log("curr post gen", metric, date.getTime());
@@ -103,8 +103,8 @@ const Response = ({ metrics, setSubmitted }) => {
                 </Box>
                 <Box maxWidth="35%">
                   <Plots
-                    isSubmitted={finishedResponses[metric]}
-                    context={metric}
+                    isFinished={finishedResponses[metric]}
+                    metric={metric}
                   />
                 </Box>
               </Stack>
