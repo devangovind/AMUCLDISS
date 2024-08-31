@@ -15,21 +15,21 @@ from transformers import BertTokenizer, BertForSequenceClassification
 import nltk
 nltk.download('vader_lexicon')
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-from transformers import BertTokenizer, BertForSequenceClassification
-from transformers import pipeline
+# from transformers import BertTokenizer, BertForSequenceClassification
+# from transformers import pipeline
 
-# Load model directly
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-# Use a pipeline as a high-level helper
-from transformers import pipeline
+# # Load model directly
+# from transformers import AutoTokenizer, AutoModelForSequenceClassification
+# # Use a pipeline as a high-level helper
+# from transformers import pipeline
 
-nlp = pipeline("text-classification", model="ProsusAI/finbert")
+# nlp = pipeline("text-classification", model="ProsusAI/finbert")
 
 
-import multiprocessing
+# import multiprocessing
 
-# Set start method for multiprocessing to 'spawn' to avoid resource tracker issues
-multiprocessing.set_start_method('spawn', force=True)
+# # Set start method for multiprocessing to 'spawn' to avoid resource tracker issues
+# multiprocessing.set_start_method('spawn', force=True)
 # import torch
 
 
