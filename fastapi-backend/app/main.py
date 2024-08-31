@@ -49,7 +49,6 @@ def streamed_res(content):
 def format_to_html(text):
     # Replace headers denoted by '###'
     text = re.sub(r'### (.+)', r'<h4>\1</h4>', text)
-
     # Replace bold text denoted by '**'
     text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
     text = re.sub(r'```.*?```', '', text, flags=re.DOTALL)

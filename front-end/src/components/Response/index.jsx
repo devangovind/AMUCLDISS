@@ -107,7 +107,7 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
     <>
       {metrics.map((metric) => (
         <>
-          {metric.key === "overview" ? (
+          {metric.key === "businessoverview" ? (
             <>
               <Typography variant="subtitle" fontWeight="bold">
                 {metric.label}

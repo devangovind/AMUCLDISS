@@ -156,6 +156,41 @@ class AIModel:
     print(run.status)
     print(run)
     return "Error in analysis"
+  
+  def company_name(self):
+
+  def businessoverview(self):
+    prompt = f"Give a general business overview for the company. This should include a small amount about fiscal performance and future directions. Maximum of 200 words"
+    thread = self.client.beta.threads.create(messages = [{"role": "user", "content": prompt}])
+    thread_id = thread.id
+    run = self.client.beta.threads.runs.create_and_poll(
+    thread_id=thread_id,
+    assistant_id=self.assistant.id,
+    instructions="Analyse the data and use all years/quarters/time quantitative data in the financial statements. When presenting calculations do not use latex just normal string text. Not using latex also means not wrapping calculations in /."
+    )
+    if run.status == 'completed': 
+      messages = self.client.beta.threads.messages.list(thread_id=thread_id)
+    
+      if messages.data:
+          for message in reversed(messages.data):
+            for message_content in message.content:
+
+              if hasattr(message_content, "image_file"):
+                file_id = message_content.image_file.file_id
+                resp = self.client.files.with_raw_response.content(file_id)
+                if resp.status_code == 200:
+                  image_data = BytesIO(resp.content)
+                  img = Image.open(image_data)
+                  img.show()
+              if hasattr(message_content, "text"):
+                 value = message_content.text.value
+          # print("message_data analyse", messages.data)
+          # print(messages.data[0].content[0].text)
+          # return value
+
+          return messages.data[0].content[0].text.value.replace("\n\n", "\n")
+
+
 
   def analyse3(self, instructions="", metric=None, reattempted=False):
     thread_key = metric.replace(" ", "").lower()
