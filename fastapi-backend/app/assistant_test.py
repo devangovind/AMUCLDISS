@@ -158,6 +158,20 @@ class AIModel:
     return "Error in analysis"
   
   def company_name(self):
+    prompt = f"Return the company name of the company from the financial documents"
+    thread = self.client.beta.threads.create(messages = [{"role": "user", "content": prompt}])
+    thread_id = thread.id
+    run = self.client.beta.threads.runs.create_and_poll(
+    thread_id=thread_id,
+    assistant_id=self.assistant.id,
+    instructions="Return nothing other than the company name. Capitalise each word (title case)."
+    )
+    if run.status == 'completed': 
+      messages = self.client.beta.threads.messages.list(thread_id=thread_id)
+    
+      if messages.data:
+          return messages.data[0].content[0].text.value.replace("\n\n", "\n")
+
 
   def businessoverview(self):
     prompt = f"Give a general business overview for the company. This should include a small amount about fiscal performance and future directions. Maximum of 200 words"

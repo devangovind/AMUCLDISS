@@ -134,7 +134,11 @@ class Model:
     def ask_prompt(self, prompt, instructions=""):
         return self.model.analyse2(prompt=prompt, instructions=instructions)
     def ask_metric(self, metric, instructions=""):
+        if metric == "businessoverview":
+            return self.model.businessoverview()
         return self.model.analyse3(metric=metric, instructions=instructions)
+    def company_name(self):
+        return self.model.company_name()
     def plot_prompt(self, prompt):
         return self.model.plots2(metric=prompt)
     def ask_chat_prompt(self, prompt):
@@ -153,6 +157,8 @@ class PPT:
         self.pptobj.update_textbox(slide, to_replace, content)
     def add_content(self, title, content):
         self.pptobj.add_content(title, content)
+    def update_title(self, title):
+        self.pptobj.update_title(title)
     def add_images(self, metric):
         self.pptobj.add_images(metric)
     def output_path(self):
@@ -162,6 +168,7 @@ class PPT:
 @app.post("/uploadfiles/")
 async def upload_files(files: List[UploadFile] = File(...)):
     model = Model()
+    ppt = PPT()
     file_contents = []
     content = {}
     excel_names = []
@@ -180,6 +187,8 @@ async def upload_files(files: List[UploadFile] = File(...)):
     file_paths = [f"saved_files/{file.filename}" for file in files if "xlsx" not in file.filename]
     file_paths.extend(excel_names)
     model.create_vector_store(file_paths)
+    company_name = model.company_name()
+    ppt.update_title(f"{company_name} Analysis")
     return True
 
 @app.post("/prompt/")
@@ -200,6 +209,10 @@ async def ask_plots(request: Request):
     prompt_text = prompt.decode('utf-8')
     ppt_slide = prompt_text.split()[0]
     model = Model()
+    print("plotprompt prompttt", prompt_text)
+    if prompt_text == "businessoverview":
+        print('here, should be here once only')
+        return ""
     res = model.plot_prompt(prompt_text)
     code_part = parse_code(res)
     print("parssed code", code_part)
@@ -219,7 +232,6 @@ async def ask_chat_prompt(request: Request):
     prompt = await request.body()
     prompt_text = prompt.decode('utf-8')
     model = Model()
-
     res = model.ask_chat_prompt(prompt_text)
     return PlainTextResponse(format_to_chat(res))
 
@@ -227,7 +239,7 @@ async def ask_chat_prompt(request: Request):
 def download_ppt():
     ppt = PPT()
     file_path = ppt.output_path()
-    print(file_path)
+    print("UPDATED TO SEE")
     return FileResponse(file_path, media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation", filename="analysis.pptx")
 
 

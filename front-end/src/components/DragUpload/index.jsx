@@ -78,7 +78,7 @@ const DragUpload = ({
   };
 
   const addMetric = () => {
-    const newMetric = additionalMetric.trim().toLowerCase();
+    const newMetric = additionalMetric.replace(/\s+/g, "").toLowerCase();
     console.log(chips, additionalMetric, newMetric);
     const metricAsChip = { key: newMetric, label: additionalMetric };
     console.log(chips.includes(metricAsChip));

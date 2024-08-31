@@ -40,10 +40,11 @@ class CreatePPT:
         x = 0
         row_counter = 0
         for image in images:
-            slide.shapes.add_picture(image, Inches(0.9+x), Inches(1.5+((row_counter//2)*3)), Inches(5))
+            print("images add to ppt", x)
+            slide.shapes.add_picture(image, Inches(1+x), Inches(1.5+((row_counter//2)*3)), Inches(5))
             #                               left, top, width, height
             row_counter += 1
-            x+= 4
+            x+= 5.5
             if row_counter % 2  == 0:
                 x = 0
         self.presentation.save(self.outputpath)
