@@ -1,4 +1,4 @@
-import { Box, Stack, Typography } from "@mui/material";
+import { Box, Grid, Stack, Typography } from "@mui/material";
 import { useState, useEffect } from "react";
 import Plots from "../Plots";
 import Mdascore from "../Mdascore";
@@ -9,28 +9,6 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
   const [mdaScore, setmdaScore] = useState(null);
 
   const fetchAndStreamMetrics = async () => {
-    const date = new Date();
-
-    // const responses = metrics.map((metric) =>
-    //   fetch("http://localhost:8000/prompt/", {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "text/plain",
-    //     },
-    //     body: metric.key,
-    //   })
-    // );
-
-    // const plots = metrics.map((metric) =>
-    //   fetch("http://localhost:8000/plotprompt/", {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "text/plain",
-    //     },
-    //     body: metric,
-    //   })
-    // );
-
     for (let i = 0; i < metrics.length; i++) {
       const metric = metrics[i].key;
 
@@ -124,6 +102,51 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
               <Typography variant="subtitle" fontWeight="bold">
                 {metric.label}
               </Typography>
+              <Grid
+                container
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                  justifyContent: "space-between",
+                }}
+                paddingBottom={1}
+              >
+                {/* Text Section */}
+                <Grid
+                  item
+                  xs={12} // Full width on small screens
+                  md={7}
+                >
+                  <Box>
+                    <Typography
+                      sx={{ flexGrow: "auto", whiteSpace: "pre-wrap" }}
+                      dangerouslySetInnerHTML={{
+                        __html: responseTexts[metric.key],
+                      }}
+                      marginBottom={10}
+                      marginX={2}
+                    />
+                  </Box>
+                </Grid>
+                {/* Spacing */}
+
+                {/* Image Section */}
+
+                <Plots
+                  isFinished={finishedResponses[metric.key]}
+                  metric={metric.key}
+                />
+              </Grid>
+            </>
+          )}
+        </>
+      ))}
+
+      {/* <>
+              <Typography variant="subtitle" fontWeight="bold">
+                {metric.label}
+              </Typography>
               <Stack flexDirection="row">
                 <Box maxWidth="55%">
                   <Typography
@@ -142,13 +165,10 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
                   />
                 </Box>
               </Stack>
-            </>
-          )}
-        </>
-      ))}
+            </> */}
+      {/* )} */}
       {includeSentiment && <Mdascore score={mdaScore} />}
     </>
   );
 };
-
 export default Response;
