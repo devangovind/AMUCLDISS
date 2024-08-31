@@ -3,7 +3,7 @@ from pptx.util import Inches, Pt
 import os
 import re
 
-class CreatePPT:
+class PPT:
     def __init__(self):
         self.presentation = pptx.Presentation(os.path.join("pres", "templatelayout.pptx"))
         self.content_to_slide_dict = {}
@@ -13,8 +13,6 @@ class CreatePPT:
         slide = self.presentation.slides[0]
         slide.shapes.title.text = title
         self.presentation.save(self.outputpath)
-
-        
 
     def add_content(self, title, content):
         slide = self.presentation.slides.add_slide(self.presentation.slide_layouts[1])

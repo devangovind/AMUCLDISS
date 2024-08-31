@@ -14,7 +14,7 @@ import time
 import re
 from collections import defaultdict
 import pandas as pd
-from presentation_create import CreatePPT
+from presentation_create import PPT
 import datetime
 
 
@@ -41,7 +41,6 @@ app.mount("/images", StaticFiles(directory=PLOT_DIR), name="images")
 
 def streamed_res(content):
     chunks = 3000
-
     for l in range(len(content)):
         time.sleep(0.005)
         yield content[l]
@@ -108,82 +107,61 @@ def gen_plots3(years, data):
             plt.ylabel(metric)
             figure_name = metric.replace(" ", "_")
             plt.savefig(f'./plots/{figure_name}.png')
-            # if len(value) > 2:
-            #     change = []
-            #     for i in range(len(value)-1):
-            #         change.append(((value[i+1]/value[i])-1)*100)
-            #     plt.figure(figsize=(10,6))
-            #     plt.title(f"{metric} % change")
-            #     plt.bar(years[1:], change)
-            #     plt.xlabel("Years")
-            #     plt.xticks(years[1:])
-            #     plt.ylabel("% Change")
-            #     figure_name = metric.replace(" ", "_")
-            #     plt.savefig(f'./plots/{figure_name}_change.png')
-            
-class Model:
+    
+
+class main_AIModel:
     _instance = None
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(Model, cls).__new__(cls)
+            cls._instance = super(main_AIModel, cls).__new__(cls)
             cls._instance.model = AIModel()  
         return cls._instance
     def create_vector_store(self, file_paths):
         self.model.create_vector_store(file_paths)
         return True
-    def ask_prompt(self, prompt, instructions=""):
-        return self.model.analyse2(prompt=prompt, instructions=instructions)
-    def ask_metric(self, metric, instructions=""):
-        if metric == "businessoverview":
-            return self.model.businessoverview()
-        return self.model.analyse3(metric=metric, instructions=instructions)
+    def business_overview(self):
+        return self.model.business_overview()
+    def analyse(self, metric, instructions=""):
+        return self.model.analyse(metric=metric, instructions=instructions)
     def company_name(self):
         return self.model.company_name()
     def plot_prompt(self, prompt):
-        return self.model.plots2(metric=prompt)
-    def ask_chat_prompt(self, prompt):
+        return self.model.plots(metric=prompt)
+    def chat_prompt(self, prompt):
         return self.model.chat_prompt(prompt=prompt)
     def mda_score(self):
         return self.model.mda_score()
 
-class PPT:
+class main_PPT:
     _instance = None
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(PPT, cls).__new__(cls)
-            cls._instance.pptobj = CreatePPT()  # Initialize your AI pptobj here
+            cls._instance = super(main_PPT, cls).__new__(cls)
+            cls._instance.pptobj = PPT() 
         return cls._instance
-    def update_slide(self, slide, to_replace, content):
-        self.pptobj.update_textbox(slide, to_replace, content)
     def add_content(self, title, content):
         self.pptobj.add_content(title, content)
     def update_title(self, title):
         self.pptobj.update_title(title)
     def add_images(self, metric):
         self.pptobj.add_images(metric)
-    def output_path(self):
-        return self.pptobj.outputpath
+    
 
 
 @app.post("/uploadfiles/")
 async def upload_files(files: List[UploadFile] = File(...)):
-    model = Model()
-    ppt = PPT()
-    file_contents = []
-    content = {}
+    model = main_AIModel()
+    ppt = main_PPT()
     excel_names = []
-
     for file in files:
         contents = await file.read()
-        file_contents.append(contents) #remove line???
         with open(f'saved_files/{file.filename}', 'wb') as f:
             f.write(contents)
-        
         if "xlsx" in file.filename:
             sheets_dict = pd.read_excel(f'saved_files/{file.filename}', sheet_name=None)
             for name, sheet in sheets_dict.items():   
-                sheet.to_csv(f'saved_files/{name}.txt', '|', index = None, header=True)
-                excel_names.append(f'saved_files/{name}.txt')
+                sheet.to_csv(f'saved_files/{name}_{sheet}.txt', '|', index = None, header=True)
+                excel_names.append(f'saved_files/{name}_{sheet}.txt')
     file_paths = [f"saved_files/{file.filename}" for file in files if "xlsx" not in file.filename]
     file_paths.extend(excel_names)
     model.create_vector_store(file_paths)
@@ -192,23 +170,24 @@ async def upload_files(files: List[UploadFile] = File(...)):
     return True
 
 @app.post("/prompt/")
-async def ask_prompt(request: Request):
+async def prompt(request: Request):
     prompt = await request.body()
     prompt_text = prompt.decode('utf-8')
-    model = Model()
-    ppt = PPT()
-    ppt_slide = prompt_text.split()[0]
-    res = model.ask_metric(prompt_text)
-    # ppt.update_slide(ppt_slide.lower(),ppt_slide.lower(), res)
+    model = main_AIModel()
+    ppt = main_PPT()
+    if prompt_text == "businessoverview":
+        res = model.business_overview()
+    else:
+        res = model.analyse(prompt_text)
     ppt.add_content(prompt_text, res)
     return StreamingResponse(streamed_res(format_to_html(res)), media_type='text/event-stream')
 
 @app.post("/plotprompt/")
-async def ask_plots(request: Request):
+async def plotprompt(request: Request):
     prompt = await request.body()
     prompt_text = prompt.decode('utf-8')
     ppt_slide = prompt_text.split()[0]
-    model = Model()
+    model = main_AIModel()
     print("plotprompt prompttt", prompt_text)
     if prompt_text == "businessoverview":
         print('here, should be here once only')
@@ -217,13 +196,13 @@ async def ask_plots(request: Request):
     code_part = parse_code(res)
     print("parssed code", code_part)
     gen_plots2(code_part)
-    ppt = PPT()
+    ppt = main_PPT()
     ppt.add_images(prompt_text)
     return res
 
 @app.post("/mdascore")
 async def mda_score():
-    model = Model()
+    model = main_AIModel()
     res = model.mda_score()
     return res
 
@@ -231,14 +210,14 @@ async def mda_score():
 async def ask_chat_prompt(request: Request):
     prompt = await request.body()
     prompt_text = prompt.decode('utf-8')
-    model = Model()
-    res = model.ask_chat_prompt(prompt_text)
+    model = main_AIModel()
+    res = model.chat_prompt(prompt_text)
     return PlainTextResponse(format_to_chat(res))
 
 @app.get("/download-ppt/")
 def download_ppt():
-    ppt = PPT()
-    file_path = ppt.output_path()
+    ppt = main_PPT()
+    file_path = ppt.output_path
     print("UPDATED TO SEE")
     return FileResponse(file_path, media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation", filename="analysis.pptx")
 
