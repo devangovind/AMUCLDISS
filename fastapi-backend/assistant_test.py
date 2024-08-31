@@ -157,9 +157,56 @@ class AIModel:
     print(run)
     return "Error in analysis"
 
+  def analyse3(self, instructions="", metric=None, reattempted=False):
+    thread_key = metric.replace(" ", "").lower()
+    print("in analyse", metric, thread_key, self.threads_dict)
+    prompt = f"Analyse specifically the {metric} of the company and how its changed over time. Have a max of 200 words.Use all time frame data and specify where its come from."
+    if thread_key not in self.threads_dict:
+      thread = self.client.beta.threads.create(messages = [{"role": "user", "content": prompt}])
+      self.threads_dict[thread_key] = thread.id
+      thread_id = thread.id
+    else:
+      thread_id = self.threads_dict[thread_key]
+      message = self.client.beta.threads.messages.create(thread_id=thread_id, role="user", content=prompt)
+    run = self.client.beta.threads.runs.create_and_poll(
+    thread_id=thread_id,
+    assistant_id=self.assistant.id,
+    instructions="Analyse the data and use all years/quarters/time quantitative data in the financial statements. When present calculations do not use latex just normal string text. Not using latex also means not wrapping calculations in /."
+    )
+    if run.status == 'completed': 
+      messages = self.client.beta.threads.messages.list(thread_id=thread_id)
+
+      
+      if messages.data:
+          for message in reversed(messages.data):
+            for message_content in message.content:
+
+              if hasattr(message_content, "image_file"):
+                file_id = message_content.image_file.file_id
+                resp = self.client.files.with_raw_response.content(file_id)
+                if resp.status_code == 200:
+                  image_data = BytesIO(resp.content)
+                  img = Image.open(image_data)
+                  img.show()
+              if hasattr(message_content, "text"):
+                 value = message_content.text.value
+          # print("message_data analyse", messages.data)
+          # print(messages.data[0].content[0].text)
+          # return value
+
+          return messages.data[0].content[0].text.value.replace("\n\n", "\n")
+    if run.status == "failed" and not reattempted:
+        print("Made it here")
+        time.sleep(40)
+        return self.analyse2(prompt=prompt, reattempted=True)
+
+    print(run.status)
+    print(run)
+    return "Error in analysis"
+
 
   def plots(self, instructions="", prompt=None, reattempted=False):
-    thread_key = prompt.split()[0]
+
     if thread_key not in self.threads_dict:
       thread = self.client.beta.threads.create(messages = [{"role": "user", "content": prompt}])
     else:
@@ -206,33 +253,28 @@ class AIModel:
     print(run)
     return "Error in analysis"
 
-  def plots2(self, instructions="", prompt=None, reattempted=False):
-    thread_key = prompt.split()[0]
+
+  def plots2(self, instructions="", metric=None, reattempted=False):
+    thread_key = metric.replace(" ", "")
+    print("plots2", metric, thread_key, self.threads_dict)
+    prompt = f"Generate the code to create plots that can be used to analyse the {metric} of the company. Use the time frame data from all consolidated statements in the plots."
     if thread_key not in self.threads_dict:
       thread = self.client.beta.threads.create(messages = [{"role": "user", "content": prompt}])
       self.threads_dict[thread_key] = thread.id
       thread_id = thread.id
+      
     else:
-      print("here threads", self.threads_dict, thread_key)
       thread_id = self.threads_dict[thread_key]
       message = self.client.beta.threads.messages.create(thread_id=thread_id, role="user", content=prompt)
-    # message = self.client.beta.threads.messages.create(thread_id=self.thread.id, role="user", content=prompt)
-    instructions = "Generate matplotlib python code to plot the trends in the data for the given metric. Include in the code the saving of the plot as a static image in the ./plots folder with an appropriate name. The folder has already been created. Do not run and save the file directly, only generate the code to do so. Metrics broken down into segments should all be on a single plot. Use all time frame data in the plots. Don't include plt.show() in the code. The x-axis should ONLY have labels for the xaxis points with data! If data is not avaiable/cannot be calculated DO NOT make up fake data, just ignore the plot completely! If your previous response did not include a metric, do not include it as a plot"
+
+    instructions = f"Generate matplotlib python code to plot the trends in the data for the given metric. The plot should represent the analysis you previously conducted. Include in the code the saving of the plot as a static image in the ./plots folder with the EXACT name of {metric}_i where i increments for each plot created. The folder has already been created. Do not run and save the file directly, only generate the code to do so. Some metrics (only revenue, cashflow and operating income) can be broken down into segments and these should all be on a single plot. Use all time frame data from all consolidated statements in the plots. Don't include plt.show() in the code. The x-axis should ONLY have labels for the xaxis points with data! If data is not avaiable/cannot be calculated DO NOT make up fake data, just ignore the plot completely! Make a maximum of 3 plots so present the most relevant data for {metric}. Make each plot have figsize=(10,6)"
     run = self.client.beta.threads.runs.create_and_poll(
     thread_id=thread_id,
     assistant_id=self.assistant.id,
     instructions=instructions
     )
-    # thread = self.client.beta.threads.create(messages = [{"role": "user", "content": "This was a good answer but upadte the dictionary to include all time frame (years, quaters, etc.) data from the financial statements in the dictionary but dont include additional metrics. I literally want the exact same response but guarantee the existing metrics use all the time frame data in all of the documents. Keep all the written section the exact same. Remember do not introduce the dictionary. Keep the analysis the same and keep same structure and format of dictionary!"}])
-    # run = self.client.beta.threads.runs.create_and_poll(
-    # thread_id=thread.id,
-    # assistant_id=self.assistant.id,
-    # instructions=""
-    # )
     if run.status == 'completed': 
       messages = self.client.beta.threads.messages.list(thread_id=thread_id)
-
-
       file_names = []
       if messages.data:
           for message in messages.data:

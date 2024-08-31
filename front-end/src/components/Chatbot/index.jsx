@@ -70,7 +70,7 @@ const Chatbot = () => {
       sender: "ai",
       message: text,
     };
-    console.log(messages);
+
     setMessages((prevMessages) => [
       ...prevMessages.slice(0, prevMessages.length - 1),
       aiResponse,

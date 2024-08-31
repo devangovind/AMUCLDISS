@@ -15,6 +15,7 @@ import re
 from collections import defaultdict
 import pandas as pd
 from presentation_create import CreatePPT
+import datetime
 
 
 load_dotenv()
@@ -106,7 +107,7 @@ def format_to_chat(text):
     # Replace bold text denoted by '**'
     text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
     text = re.sub(r'```.*?```', '', text, flags=re.DOTALL)
-
+    text = re.sub(r"【.*?】", "", text)
     return text
 
 
@@ -156,6 +157,7 @@ def gen_plots(code):
 def gen_plots2(code):
     try:
         exec(code)
+        return
     except Exception as e:
         print("genplots exception", code, e)
 
@@ -211,8 +213,10 @@ class Model:
         return True
     def ask_prompt(self, prompt, instructions=""):
         return self.model.analyse2(prompt=prompt, instructions=instructions)
+    def ask_metric(self, metric, instructions=""):
+        return self.model.analyse3(metric=metric, instructions=instructions)
     def plot_prompt(self, prompt):
-        return self.model.plots2(prompt=prompt)
+        return self.model.plots2(metric=prompt)
     def ask_chat_prompt(self, prompt):
         return self.model.chat_prompt(prompt=prompt)
     def mda_score(self):
@@ -227,8 +231,10 @@ class PPT:
         return cls._instance
     def update_slide(self, slide, to_replace, content):
         self.pptobj.update_textbox(slide, to_replace, content)
-    def add_images(self, slide, metric):
-        self.pptobj.add_image_to_slide(slide, metric)
+    def add_content(self, title, content):
+        self.pptobj.add_content(title, content)
+    def add_images(self, metric):
+        self.pptobj.add_images(metric)
     def output_path(self):
         return self.pptobj.outputpath
 
@@ -263,8 +269,9 @@ async def ask_prompt(request: Request):
     model = Model()
     ppt = PPT()
     ppt_slide = prompt_text.split()[0]
-    res = model.ask_prompt(prompt_text)
-    ppt.update_slide(ppt_slide.lower(),ppt_slide.lower(), res)
+    res = model.ask_metric(prompt_text)
+    # ppt.update_slide(ppt_slide.lower(),ppt_slide.lower(), res)
+    ppt.add_content(prompt_text, res)
     return StreamingResponse(streamed_res(format_to_html(res)), media_type='text/event-stream')
 
 @app.post("/plotprompt/")
@@ -278,7 +285,7 @@ async def ask_plots(request: Request):
     print("parssed code", code_part)
     gen_plots2(code_part)
     ppt = PPT()
-    ppt.add_images(ppt_slide.lower(),ppt_slide.lower())
+    ppt.add_images(prompt_text)
     return res
 
 @app.post("/mdascore")
