@@ -32,6 +32,7 @@ function App() {
   const [isFinished, setIsFinished] = useState(false);
   const [selectedChips, setSelectedChips] = useState([]);
   const [isUploaded, setIsUploaded] = useState(false);
+  const [includeSentiment, setIncludeSentiment] = useState(false);
 
   const handleFileChange = (e) => {
     // e.preventDefault();
@@ -59,134 +60,6 @@ function App() {
       });
       setIsUploaded(true);
       setResponse("Uploaded");
-      // const responses = selectedChips.map((metric) =>
-      //   fetch("http://localhost:8000/prompt/", {
-      //     method: "POST",
-      //     headers: {
-      //       "Content-Type": "text/plain", // Explicitly declare the content type
-      //     },
-      //     body: metric,
-      //   })
-      // );
-
-      // const plots = selectedChips.map((metric) =>
-      //   fetch("http://localhost:8000/plotprompt/", {
-      //     method: "POST",
-      //     headers: {
-      //       "Content-Type": "text/plain", // Explicitly declare the content type
-      //     },
-      //     body: metric,
-      //   })
-      // );
-
-      // const overview = await fetch("http://localhost:8000/prompt/", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "text/plain", // Explicitly declare the content type
-      //   },
-      //   body: "Give a 100 word overview on the company and its financial performance based on the data uploaded to the vector store",
-      // });
-      // setResponse("");
-      // await gensection(overview, setResponse);
-      // setRevenue("Analysing revenue...");
-      // const revenue_analysis = await fetch("http://localhost:8000/prompt/", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "text/plain", // Explicitly declare the content type
-      //   },
-      //   body: "Revenue analysis. Analyse specifically the revenue not the operating income and general profit and loss of the company and how its changed over time. Calculate implied metrics such as where the revenue has come from. Have a max of 200 words. Use all time frame data and specify where its come from. Calculate and analysis the derivates of the trends if possible and relevant",
-      // });
-
-      // setRevenue("");
-      // await gensection(revenue_analysis, setRevenue);
-      // const opIncomeReq = fetch("http://localhost:8000/prompt/", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "text/plain", // Explicitly declare the content type
-      //   },
-      //   body: "OperatingIncome analysis. Analyse specifically the operating income not the revenue of the company and how its changed over time. Have a max of 200 words.Use all time frame data and specify where its come from.",
-      // });
-      // const othersReq = fetch("http://localhost:8000/prompt/", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "text/plain", // Explicitly declare the content type
-      //   },
-      //   body: "KPIs analysis. Analyse any remaining KPIs. This includes PBT margin, income to cost ratio, gross yield, cost of risk, return on tangible equity, net interest margin. If a KPI isnt explicitly stated, but can be calculated present the calcualted result for each time period possible and analyse how its changed. Do not use latex. If a KPI isnt stated and cannot be calculated to a final quantitative value then ignore it and don't mention it at all! Do not mention any of the KPIs I listed if they cannot be calculated. Only present the KPIs that have a value. Maximum of 200 words.",
-      // });
-
-      // const revenue_plots_str =
-      //   "Revenue plots. Generate the code to create plots that can be used to analyse the revenue of the company. Have total revenue as well as revenue broekn down by segment";
-      // const revenue_plots = await fetch("http://localhost:8000/plotprompt/", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "text/plain", // Explicitly declare the content type
-      //   },
-      //   body: revenue_plots_str,
-      // });
-
-      // setOperatingIncome("Analysing Operating Income...");
-      // const opIncome = await opIncomeReq;
-      // const op_plots_str =
-      //   "OperatingIncome plots. Generate the code to create plots that can be used to analyse the operating income of the company, not the revenue. Have total operating income as well as operating income broken down by segment";
-      // const op_plots = await fetch("http://localhost:8000/plotprompt/", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "text/plain", // Explicitly declare the content type
-      //   },
-      //   body: op_plots_str,
-      // });
-      // setOperatingIncome("");
-      // console.log("Revenue", revenue_analysis);
-      // console.log("Opreq", opIncomeReq);
-      // console.log("Op", opIncome);
-      // await gensection(opIncome, setOperatingIncome);
-      // setCashFlow("Analysing cash flow...");
-      // const cash_flow_analysis = await fetch("http://localhost:8000/prompt/", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "text/plain", // Explicitly declare the content type
-      //   },
-      //   body: "CashFlow analysis. Analyse specifically the cash flow of the company and how its changed over time. Have a max of 200 words. Use all time frame data and specify where its come from.",
-      // });
-      // const cash_flow_str =
-      //   "CashFlow plots. Generate the code to create plots that can be used to analyse the cash flow of the company.";
-      // const cash_flow_plots = await fetch("http://localhost:8000/plotprompt/", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "text/plain", // Explicitly declare the content type
-      //   },
-      //   body: cash_flow_str,
-      // });
-      // setCashFlow("");
-      // await gensection(cash_flow_analysis, setCashFlow);
-      // setOtherKPIs("Analysing additional KPIs...");
-      // const otherKpis = await othersReq;
-      // setOtherKPIs("");
-      // await gensection(otherKpis, setOtherKPIs);
-      // const otherkpis_str =
-      //   "KPIs plot. Generate the code to create plots that can be used to analyse the other kpis of the company. This includes PBT margin, income to cost ratio, gross yield, cost of risk, return on tangible equity, net interest margin. If a KPI cannot be calculated or derived then ignore it completely and do not try make a plot! DO NOT MAKE UP/USE EXAMPLE DATA! Have the KPIs each have their own plot";
-      // const otherkpis = await fetch("http://localhost:8000/plotprompt/", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "text/plain", // Explicitly declare the content type
-      //   },
-      //   body: otherkpis_str,
-      // });
-      // const mda_response = await fetch("http://localhost:8000/mdascore/", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "text/plain", // Explicitly declare the content type
-      //   },
-      //   body: "",
-      // });
-      // console.log("mdres", mda_response);
-      // const text = await mda_response.text();
-      // console.log(text, text.split(","));
-      // const mda_score = Math.round(
-      //   parseFloat(text.split(",")[0].replace(/"/g, ""), 10)
-      // );
-
-      // setmdaScore(isNaN(mda_score) ? null : mda_score);
     }
   };
 
@@ -232,6 +105,8 @@ function App() {
             setFiles={setFiles}
             selectedChips={selectedChips}
             setSelectedChips={setSelectedChips}
+            includeSentiment={includeSentiment}
+            setIncludeSentiment={setIncludeSentiment}
           />
         </>
       )}
@@ -248,7 +123,11 @@ function App() {
             sx={{ flexGrow: "auto", maxWidth: "100%", marginBottom: "20px" }}
           >
             {isUploaded && (
-              <Response metrics={selectedChips} setSubmitted={setIsFinished} />
+              <Response
+                metrics={selectedChips}
+                setSubmitted={setIsFinished}
+                includeSentiment={includeSentiment}
+              />
             )}
 
             {/* {selectedChips.map( (index, metric) => {

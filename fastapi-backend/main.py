@@ -107,7 +107,7 @@ def format_to_chat(text):
     # Replace bold text denoted by '**'
     text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
     text = re.sub(r'```.*?```', '', text, flags=re.DOTALL)
-
+    text = re.sub(r"【.*?】", "", text)
     return text
 
 
@@ -231,8 +231,10 @@ class PPT:
         return cls._instance
     def update_slide(self, slide, to_replace, content):
         self.pptobj.update_textbox(slide, to_replace, content)
-    def add_images(self, slide, metric):
-        self.pptobj.add_image_to_slide(slide, metric)
+    def add_content(self, title, content):
+        self.pptobj.add_content(title, content)
+    def add_images(self, metric):
+        self.pptobj.add_images(metric)
     def output_path(self):
         return self.pptobj.outputpath
 
@@ -267,10 +269,9 @@ async def ask_prompt(request: Request):
     model = Model()
     ppt = PPT()
     ppt_slide = prompt_text.split()[0]
-    print("pre", datetime.datetime.now())
     res = model.ask_metric(prompt_text)
-    print("post", datetime.datetime.now())
-    ppt.update_slide(ppt_slide.lower(),ppt_slide.lower(), res)
+    # ppt.update_slide(ppt_slide.lower(),ppt_slide.lower(), res)
+    ppt.add_content(prompt_text, res)
     return StreamingResponse(streamed_res(format_to_html(res)), media_type='text/event-stream')
 
 @app.post("/plotprompt/")
@@ -284,7 +285,7 @@ async def ask_plots(request: Request):
     print("parssed code", code_part)
     gen_plots2(code_part)
     ppt = PPT()
-    ppt.add_images(ppt_slide.lower(),ppt_slide.lower())
+    ppt.add_images(prompt_text)
     return res
 
 @app.post("/mdascore")

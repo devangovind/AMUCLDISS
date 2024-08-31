@@ -1,23 +1,25 @@
 import { Box, Stack, Typography } from "@mui/material";
 import { useState, useEffect } from "react";
 import Plots from "../Plots";
+import Mdascore from "../Mdascore";
 
-const Response = ({ metrics, setSubmitted }) => {
+const Response = ({ metrics, setSubmitted, includeSentiment }) => {
   const [responseTexts, setResponseTexts] = useState({});
   const [finishedResponses, setFinishedResponses] = useState({});
+  const [mdaScore, setmdaScore] = useState(null);
 
   const fetchAndStreamMetrics = async () => {
     const date = new Date();
 
-    const responses = metrics.map((metric) =>
-      fetch("http://localhost:8000/prompt/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain",
-        },
-        body: metric,
-      })
-    );
+    // const responses = metrics.map((metric) =>
+    //   fetch("http://localhost:8000/prompt/", {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "text/plain",
+    //     },
+    //     body: metric.key,
+    //   })
+    // );
 
     // const plots = metrics.map((metric) =>
     //   fetch("http://localhost:8000/plotprompt/", {
@@ -30,10 +32,17 @@ const Response = ({ metrics, setSubmitted }) => {
     // );
 
     for (let i = 0; i < metrics.length; i++) {
-      const metric = metrics[i];
-      console.log("prev", metric, responses, date.getTime());
-      const response = await responses[i]; // Wait for the response of the current metric
-      console.log("curr", metric, date.getTime());
+      const metric = metrics[i].key;
+
+      //   const response = await responses[i]; // Wait for the response of the current metric
+      const response = await fetch("http://localhost:8000/prompt/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain",
+        },
+        body: metrics[i].label,
+      });
+
       await fetch("http://localhost:8000/plotprompt/", {
         method: "POST",
         headers: {
@@ -42,10 +51,8 @@ const Response = ({ metrics, setSubmitted }) => {
         body: metric,
       });
       setFinishedResponses((prev) => ({ ...prev, [metric]: true }));
-      console.log("curr post plot", metric, date.getTime());
+
       await gensection(response, metric);
-      console.log("curr post gen", metric, date.getTime());
-      console.log("big responses", responses);
     }
     setSubmitted(true);
   };
@@ -74,37 +81,64 @@ const Response = ({ metrics, setSubmitted }) => {
       fetchAndStreamMetrics();
     }
   }, []);
+  const getMdaScore = async () => {
+    const mda_response = await fetch("http://localhost:8000/mdascore/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain", // Explicitly declare the content type
+      },
+      body: "",
+    });
 
+    const text = await mda_response.text();
+
+    const mda_score = Math.round(
+      parseFloat(text.split(",")[0].replace(/"/g, ""), 10)
+    );
+
+    setmdaScore(isNaN(mda_score) ? null : mda_score);
+  };
+  useEffect(() => {
+    if (includeSentiment) {
+      getMdaScore();
+    }
+  }, [includeSentiment]);
   return (
     <>
       {metrics.map((metric) => (
         <>
-          {metric === "overview" ? (
+          {metric.key === "overview" ? (
             <>
-              <Typography variant="subtitle">{metric}</Typography>
+              <Typography variant="subtitle" fontWeight="bold">
+                {metric.label}
+              </Typography>
               <Typography
                 sx={{ flexGrow: "auto", whiteSpace: "pre-wrap" }}
-                dangerouslySetInnerHTML={{ __html: responseTexts[metric] }}
+                dangerouslySetInnerHTML={{ __html: responseTexts[metric.key] }}
                 marginBottom={10}
                 marginX={2}
               />
             </>
           ) : (
             <>
-              <Typography variant="subtitle">{metric}</Typography>
+              <Typography variant="subtitle" fontWeight="bold">
+                {metric.label}
+              </Typography>
               <Stack flexDirection="row">
                 <Box maxWidth="55%">
                   <Typography
                     sx={{ flexGrow: "auto", whiteSpace: "pre-wrap" }}
-                    dangerouslySetInnerHTML={{ __html: responseTexts[metric] }}
+                    dangerouslySetInnerHTML={{
+                      __html: responseTexts[metric.key],
+                    }}
                     marginBottom={10}
                     marginX={2}
                   />
                 </Box>
                 <Box maxWidth="35%">
                   <Plots
-                    isFinished={finishedResponses[metric]}
-                    metric={metric}
+                    isFinished={finishedResponses[metric.key]}
+                    metric={metric.key}
                   />
                 </Box>
               </Stack>
@@ -112,6 +146,7 @@ const Response = ({ metrics, setSubmitted }) => {
           )}
         </>
       ))}
+      {includeSentiment && <Mdascore score={mdaScore} />}
     </>
   );
 };

@@ -158,8 +158,9 @@ class AIModel:
     return "Error in analysis"
 
   def analyse3(self, instructions="", metric=None, reattempted=False):
+    thread_key = metric.replace(" ", "").lower()
+    print("in analyse", metric, thread_key, self.threads_dict)
     prompt = f"Analyse specifically the {metric} of the company and how its changed over time. Have a max of 200 words.Use all time frame data and specify where its come from."
-    thread_key = metric
     if thread_key not in self.threads_dict:
       thread = self.client.beta.threads.create(messages = [{"role": "user", "content": prompt}])
       self.threads_dict[thread_key] = thread.id
@@ -205,7 +206,7 @@ class AIModel:
 
 
   def plots(self, instructions="", prompt=None, reattempted=False):
-    thread_key = prompt.split()[0]
+
     if thread_key not in self.threads_dict:
       thread = self.client.beta.threads.create(messages = [{"role": "user", "content": prompt}])
     else:
@@ -254,17 +255,19 @@ class AIModel:
 
 
   def plots2(self, instructions="", metric=None, reattempted=False):
-    thread_key = metric.split()[0]
+    thread_key = metric.replace(" ", "")
+    print("plots2", metric, thread_key, self.threads_dict)
     prompt = f"Generate the code to create plots that can be used to analyse the {metric} of the company. Use the time frame data from all consolidated statements in the plots."
     if thread_key not in self.threads_dict:
       thread = self.client.beta.threads.create(messages = [{"role": "user", "content": prompt}])
       self.threads_dict[thread_key] = thread.id
       thread_id = thread.id
+      
     else:
       thread_id = self.threads_dict[thread_key]
       message = self.client.beta.threads.messages.create(thread_id=thread_id, role="user", content=prompt)
 
-    instructions = f"Generate matplotlib python code to plot the trends in the data for the given metric. Include in the code the saving of the plot as a static image in the ./plots folder with the EXACT name of {metric}_i where i increments for each plot created. The folder has already been created. Do not run and save the file directly, only generate the code to do so. Some metrics (typically revenue, cashflow and operating income) can be broken down into segments and these should all be on a single plot. Use all time frame data from all consolidated statements in the plots. Don't include plt.show() in the code. The x-axis should ONLY have labels for the xaxis points with data! If data is not avaiable/cannot be calculated DO NOT make up fake data, just ignore the plot completely! If your previous response did not include a metric, do not include it as a plot. Make a maximum of 3 plots so present the most relevant data for {metric}"
+    instructions = f"Generate matplotlib python code to plot the trends in the data for the given metric. The plot should represent the analysis you previously conducted. Include in the code the saving of the plot as a static image in the ./plots folder with the EXACT name of {metric}_i where i increments for each plot created. The folder has already been created. Do not run and save the file directly, only generate the code to do so. Some metrics (only revenue, cashflow and operating income) can be broken down into segments and these should all be on a single plot. Use all time frame data from all consolidated statements in the plots. Don't include plt.show() in the code. The x-axis should ONLY have labels for the xaxis points with data! If data is not avaiable/cannot be calculated DO NOT make up fake data, just ignore the plot completely! Make a maximum of 3 plots so present the most relevant data for {metric}. Make each plot have figsize=(10,6)"
     run = self.client.beta.threads.runs.create_and_poll(
     thread_id=thread_id,
     assistant_id=self.assistant.id,

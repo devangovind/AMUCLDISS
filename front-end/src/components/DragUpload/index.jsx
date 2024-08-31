@@ -18,6 +18,7 @@ import {
   Typography,
   alpha,
   styled,
+  useTheme,
 } from "@mui/material";
 import Iconify from "../Iconify";
 const DragUpload = ({
@@ -27,10 +28,14 @@ const DragUpload = ({
   setFiles,
   selectedChips,
   setSelectedChips,
+  includeSentiment,
+  setIncludeSentiment,
 }) => {
   const [additionalMetric, setAdditionalMetric] = useState("");
   const [sendDisabled, setsendDisabled] = useState(true);
   const [chips, setChips] = useState(chipLabels);
+  const [allowSubmit, setAllowSubmit] = useState(false);
+  const theme = useTheme();
 
   const handleFileChange = (event) => {
     const selectedFiles = event.target.files;
@@ -71,6 +76,7 @@ const DragUpload = ({
   const _handleInputChange = (e) => {
     setAdditionalMetric(e.target.value);
   };
+
   const addMetric = () => {
     const newMetric = additionalMetric.trim().toLowerCase();
     console.log(chips, additionalMetric, newMetric);
@@ -91,7 +97,13 @@ const DragUpload = ({
     }
     setAdditionalMetric("");
   };
-
+  useEffect(() => {
+    if (selectedChips.length > 0 || includeSentiment) {
+      setAllowSubmit(true);
+    } else {
+      setAllowSubmit(false);
+    }
+  }, [selectedChips, includeSentiment]);
   return (
     <DragDropBox
       onDrop={handleDrop}
@@ -159,7 +171,12 @@ const DragUpload = ({
           maxWidth="60%"
           sx={{ margin: "0 auto" }}
         >
-          <Stack flexDirection="column" justifyContent="center">
+          <Stack
+            flexDirection="column"
+            justifyContent="center"
+            marginTop={2}
+            gap={2}
+          >
             <Typography
               variant="subtitle"
               justifyContent="center"
@@ -167,7 +184,12 @@ const DragUpload = ({
             >
               {files.length} file(s) selected
             </Typography>
-            <Typography variant="h5" justifyContent="center" display="flex">
+            <Typography
+              variant="h5"
+              fontWeight="bold"
+              justifyContent="center"
+              display="flex"
+            >
               Metrics for analysis:
             </Typography>
             <ChipsWithCheckboxGroup
@@ -180,36 +202,61 @@ const DragUpload = ({
               justifyContent="center"
               display="flex"
             >
-              Additional metrics:
+              Add additional metrics:
             </Typography>
-            <Stack
-              flexDirection="row"
-              justifyContent="space-between"
-              paddingY={0.5}
-              alignItems="center"
-            >
-              <Input
-                placeholder="Add additional metrics"
-                variant="contained"
-                multiline={true}
-                sx={{
-                  width: "80%",
-                  marginLeft: "20px",
-                }}
-                value={additionalMetric}
-                onChange={_handleInputChange}
-                // disabled={inputDisabled}
-              />
-
-              <IconButton
-                onClick={() => addMetric()}
-                disabled={sendDisabled}
-                sx={{ marginRight: "10px" }}
+            <Box justifyContent="center" display="flex">
+              <Stack
+                flexDirection="row"
+                justifyContent="space-between"
+                paddingY={0.5}
+                alignItems="center"
+                sx={{ width: "50%" }}
               >
-                <Iconify icon="bi:send-fill" />
-              </IconButton>
-            </Stack>
-            <Button onClick={onSubmit} variant="contained">
+                <Input
+                  placeholder="Add additional metrics"
+                  variant="contained"
+                  multiline={true}
+                  sx={{
+                    width: "80%",
+                  }}
+                  value={additionalMetric}
+                  onChange={_handleInputChange}
+                  // disabled={inputDisabled}
+                />
+
+                <IconButton
+                  onClick={() => addMetric()}
+                  disabled={sendDisabled}
+                  sx={{ marginRight: "10px" }}
+                >
+                  <Iconify
+                    icon="mingcute:add-line"
+                    color={
+                      sendDisabled
+                        ? theme.palette.action.disabled
+                        : theme.palette.text.primary
+                    }
+                  />
+                </IconButton>
+              </Stack>
+            </Box>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={includeSentiment}
+                  onChange={() => setIncludeSentiment((prev) => !prev)}
+                  color="primary"
+                />
+              }
+              label="Include sentiment analysis on Managament Discussion & Analysis section?"
+              sx={{ margin: "0 auto" }}
+            />
+            <Button
+              onClick={onSubmit}
+              variant="contained"
+              sx={{ width: "50%", margin: "0 auto" }}
+              disabled={!allowSubmit}
+            >
               Submit
             </Button>
           </Stack>
@@ -234,18 +281,20 @@ const DragDropBox = styled(Card)(({ theme }) => ({
 }));
 
 const ChipsWithCheckboxGroup = ({ chips, selectedChips, setSelectedChips }) => {
-  const chipsOrder = chips.map((item) => item.key);
-  const handleToggleChip = (key) => {
-    const chipSelected = selectedChips.some((item) => item.key === key);
+  // const chipsOrder = chips.map((item) => item.key);
+  const handleToggleChip = (chip) => {
+    const chipSelected = selectedChips.some((item) => item.key === chip.key);
+    console.log("pre seelcted: ", selectedChips);
     setSelectedChips((prevSelectedChips) =>
-      prevSelectedChips.includes(key)
-        ? prevSelectedChips.filter((chip) => chip !== key)
-        : [...prevSelectedChips, key]
+      chipSelected
+        ? prevSelectedChips.filter((item) => item.key !== chip.key)
+        : [...prevSelectedChips, chip]
     );
+    console.log(chipSelected, "clicked", chip, "seelcted: ", selectedChips);
     setSelectedChips((prevSelectedChips) =>
       prevSelectedChips.sort((a, b) => {
-        let indexA = chipsOrder.indexOf(a);
-        let indexB = chipsOrder.indexOf(b);
+        let indexA = chips.indexOf(a);
+        let indexB = chips.indexOf(b);
 
         if (indexA === -1 && indexB === -1) {
           return 0;
@@ -261,7 +310,7 @@ const ChipsWithCheckboxGroup = ({ chips, selectedChips, setSelectedChips }) => {
   };
 
   return (
-    <Box sx={{ maxWidth: "70%", margin: "0 auto" }}>
+    <Box sx={{ maxWidth: "100%", margin: "0 auto" }}>
       <Stack
         flexDirection="row"
         flexWrap="wrap"
@@ -272,8 +321,8 @@ const ChipsWithCheckboxGroup = ({ chips, selectedChips, setSelectedChips }) => {
           <CustomChips
             key={item.key}
             label={item.label}
-            isSelected={selectedChips.includes(item.key)}
-            onToggle={() => handleToggleChip(item.key, item.label)}
+            isSelected={selectedChips.some((prev) => prev.key === item.key)}
+            onToggle={() => handleToggleChip(item)}
           />
         ))}
       </Stack>
@@ -297,7 +346,7 @@ const CustomChips = ({ key, label, isSelected, onToggle }) => {
         />
       }
       variant={isSelected ? "default" : "outlined"}
-      onClick={onToggle}
+      // onClick={onToggle}
     />
   );
 };
