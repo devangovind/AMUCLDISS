@@ -15,6 +15,7 @@ services:
       PORT: 8000
     env_file:
       - .env
+    volumes:
+      - ./app:/app
     ports:
       - "8000:8000"
-    restart: "no"
