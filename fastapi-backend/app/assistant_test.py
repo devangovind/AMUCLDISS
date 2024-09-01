@@ -11,10 +11,11 @@ from PIL import Image
 import time
 import os
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
-from transformers import BertTokenizer, BertForSequenceClassification
+# from transformers import BertTokenizer, BertForSequenceClassification
 import nltk
 nltk.download('vader_lexicon')
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
+from transformers import pipeline
 # from transformers import BertTokenizer, BertForSequenceClassification
 # from transformers import pipeline
 
@@ -50,20 +51,7 @@ class AIModel:
   def __init__(self):
     self.client = AzureOpenAI(api_key=AI_API_KEY, azure_endpoint=AI_ENDPOINT, api_version="2024-05-01-preview")
     self.assistant = self.client.beta.assistants.create(name="Finance Visualisation", 
-                                                        instructions=f"You are a finance assistant. 
-                                                        Your job is to interpret financial documents 
-                                                        and provide analysis based on it. 
-                                                        Compare to the wider industry where possible. 
-                                                        For new lines signify via newline character in python. 
-                                                        To make something a title rather than use ###, 
-                                                        wrap it in <h3> tags. To make a subtitle/bold, 
-                                                        wrap it in **. 
-                                                        Don't present any calculations only present the answer.
-                                                        DO NOT USE ANY LaTeX!! 
-                                                        There should be NO partial calculations without a final evaluated answer!! 
-                                                        All code produced needs to be in a single ``` block. 
-                                                        Do not speak in the first person. 
-                                                        The data you read from in the vector store will likely be annual or quarterly report so in the analysis take into account the timeframe of the data and specify if its just quarterly. Remember to look at whether the quantitative values are positive or negative (indicated by () or the caption (loss)). When analysing and reading the documents focus on quantitative data. Do not include the citations/sources at all in the response",tools=[{"type": "file_search"}, {"type": "code_interpreter"}],
+                                                        instructions=f"You are a finance assistant. Your job is to interpret financial documents and provide analysis based on it. Compare to the wider industry where possible. For new lines signify via newline character in python. To make something a title rather than use ###, wrap it in <h3> tags. To make a subtitle/bold, wrap it in **. Don't present any calculations only present the answer.DO NOT USE ANY LaTeX!! There should be NO partial calculations without a final evaluated answer!! All code produced needs to be in a single ``` block. Do not speak in the first person. The data you read from in the vector store will likely be annual or quarterly report so in the analysis take into account the timeframe of the data and specify if its just quarterly. Remember to look at whether the quantitative values are positive or negative (indicated by () or the caption (loss)). When analysing and reading the documents focus on quantitative data. Do not include the citations/sources at all in the response",tools=[{"type": "file_search"}, {"type": "code_interpreter"}],
                                           model="gpt-4o")
     self.chatthread = self.client.beta.threads.create()
     self.threads_dict = {}
@@ -94,17 +82,13 @@ class AIModel:
 
 
   def business_overview(self):
-    prompt = f"Give a general business overview for the company. 
-              This should include a small amount about fiscal performance and future directions. 
-              Maximum of 200 words"
+    prompt = f"Give a general business overview of the company. Focus on more recent data of the company. The overview should include a small amount about fiscal performance and future directions. Maximum of 200 words"
     thread = self.client.beta.threads.create(messages = [{"role": "user", "content": prompt}])
     thread_id = thread.id
     run = self.client.beta.threads.runs.create_and_poll(
     thread_id=thread_id,
     assistant_id=self.assistant.id,
-    instructions=f"Use all years/quarters/time quantitative data in the financial statements. 
-                  When presenting calculations do not use latex just normal markdown text. 
-                  Do not wrap any calculations in /."
+    instructions=f"Use all years/quarters/time quantitative data in the financial statements.  When presenting calculations do not use latex just normal markdown text. Do not wrap any calculations in /."
     )
     if run.status == 'completed': 
       messages = self.client.beta.threads.messages.list(thread_id=thread_id)
@@ -115,113 +99,94 @@ class AIModel:
 
   def analyse(self, instructions="", metric=None, reattempted=False):
     thread_key = metric.replace(" ", "").lower()
-    print("in analyse", metric, thread_key, self.threads_dict)
-    prompt = f"Analyse specifically the {metric} of the company and how its changed over time. Have a max of 200 words.Use all time frame data and specify where its come from."
+    prompt = f"Analyse specifically the {metric} of the company and how its changed over time. Have a max of 200 words. Use data from all time frames presented in documents."
     if thread_key not in self.threads_dict:
       thread = self.client.beta.threads.create(messages = [{"role": "user", "content": prompt}])
       self.threads_dict[thread_key] = thread.id
       thread_id = thread.id
     else:
       thread_id = self.threads_dict[thread_key]
-      message = self.client.beta.threads.messages.create(thread_id=thread_id, role="user", content=prompt)
+      self.client.beta.threads.messages.create(thread_id=thread_id, role="user", content=prompt)
     run = self.client.beta.threads.runs.create_and_poll(
     thread_id=thread_id,
     assistant_id=self.assistant.id,
-    instructions="Analyse the data and use all years/quarters/time quantitative data in the financial statements. When present calculations do not use latex just normal string text. Not using latex also means not wrapping calculations in /."
+    instructions=f"Analyse the data and use all years/quarters/time quantitative data in the financial statements. \
+                   When presenting calculations do not use latex just markdown text. Do not wrap calculations in /. \
+                    {instructions}"
     )
     if run.status == 'completed': 
       messages = self.client.beta.threads.messages.list(thread_id=thread_id)
-
-      
       if messages.data:
-          for message in reversed(messages.data):
-            for message_content in message.content:
-
-              if hasattr(message_content, "image_file"):
-                file_id = message_content.image_file.file_id
-                resp = self.client.files.with_raw_response.content(file_id)
-                if resp.status_code == 200:
-                  image_data = BytesIO(resp.content)
-                  img = Image.open(image_data)
-                  img.show()
-              if hasattr(message_content, "text"):
-                 value = message_content.text.value
-          # print("message_data analyse", messages.data)
-          # print(messages.data[0].content[0].text)
-          # return value
-
           return messages.data[0].content[0].text.value.replace("\n\n", "\n")
     if run.status == "failed" and not reattempted:
-        print("Made it here")
         time.sleep(40)
-        return self.analyse2(prompt=prompt, reattempted=True)
-
-    print(run.status)
-    print(run)
+        return self.analyse(metric=metric, reattempted=True)
     return "Error in analysis"
+  
+# for message in reversed(messages.data):
+#             for message_content in message.content:
+#               if hasattr(message_content, "image_file"):
+#                 file_id = message_content.image_file.file_id
+#                 resp = self.client.files.with_raw_response.content(file_id)
+#                 if resp.status_code == 200:
+#                   image_data = BytesIO(resp.content)
+#                   img = Image.open(image_data)
+#                   img.show()
+#               if hasattr(message_content, "text"):
+#                  value = message_content.text.value
 
-
-  def plots2(self, instructions="", metric=None, reattempted=False):
+  def plots(self, instructions="", metric=None, reattempted=False):
     thread_key = metric.replace(" ", "")
-    print("plots2", metric, thread_key, self.threads_dict)
-    prompt = f"Generate the code to create plots that can be used to analyse the {metric} of the company. Use the time frame data from all consolidated statements in the plots. Name the plots exactly {metric}_i where i increments for each plot."
+    prompt = f"Generate the code to create plots that can be used to analyse the {metric} of the company. \
+              Use the time frame data from all consolidated statements in the plots. \
+              Name the plots exactly {metric}_i where i increments for each plot.  \
+              The plot should represent the analysis you previously conducted."
     if thread_key not in self.threads_dict:
       thread = self.client.beta.threads.create(messages = [{"role": "user", "content": prompt}])
       self.threads_dict[thread_key] = thread.id
       thread_id = thread.id
-      
     else:
       thread_id = self.threads_dict[thread_key]
       message = self.client.beta.threads.messages.create(thread_id=thread_id, role="user", content=prompt)
-
-    instructions = f"Generate matplotlib python code to plot the trends in the data for the given metric. The plot should represent the analysis you previously conducted. Include in the code the saving of the plot as a static image in the ./plots folder with the EXACT name of {metric}_i where i increments for each plot created, do not deviate from this naming convention at all. The folder has already been created. Do not run and save the file directly, only generate the code to do so. Some metrics (only revenue, cashflow and operating income) can be broken down into segments and these should all be on a single plot with the total. Use all time frame data from all consolidated statements in the plots. Don't include plt.show() in the code. The x-axis should ONLY have labels for the xaxis points with data! If data is not avaiable/cannot be calculated DO NOT make up fake data, just ignore the plot completely! Make a maximum of 3 plots, so present only the most relevant data for {metric}. Make each plot have figsize=(10,6). Make the code compatible to be run via python exec() "
-    run = self.client.beta.threads.runs.create_and_poll(
-    thread_id=thread_id,
-    assistant_id=self.assistant.id,
-    instructions=instructions
-    )
+    instructions = f"Generate matplotlib python code to plot the trends in the data for the given metric. \
+                    The plot should represent the analysis you previously conducted. \
+                    Include in the code the saving of the plot as a static image in the ./plots folder \
+                    with the name of {metric}_i where i increments for each plot created, do not deviate \
+                    from this naming convention at all. The folder has already been created. Do not run and \
+                    save the file directly, only generate the code to do so. Some metrics (only revenue, \
+                    cashflow and operating income) can be broken down into segments and these should all \
+                    be on a single plot with the total. Don't have multiple plots that show the same data. \
+                    Use all time frame data from all consolidated statements in the plots. \
+                    Don't include plt.show() in the code. The x-axis should ONLY have labels for the xaxis \
+                    points with data. If data is not avaiable/cannot be calculated DO NOT make up fake data, \
+                    just ignore the plot completely! Make a maximum of 3 plots, so present only the most \
+                    relevant data for {metric}. Make each plot have figsize=(10,6). \
+                    Make the code compatible to be run via python exec(). {instructions}"
+    run = self.client.beta.threads.runs.create_and_poll(thread_id=thread_id, assistant_id=self.assistant.id,instructions=instructions)
     if run.status == 'completed': 
       messages = self.client.beta.threads.messages.list(thread_id=thread_id)
-      file_names = []
       if messages.data:
           for message in messages.data:
             for message_content in message.content:
-
               if hasattr(message_content, "image_file"):
                 continue
-                file_id = message_content.image_file.file_id
-                resp = self.client.files.with_raw_response.content(file_id)
-                if resp.status_code == 200:
-                  image_data = BytesIO(resp.content)
-                  img = Image.open(image_data)
               if hasattr(message_content, "text"):
-                value = message_content.text.value
-                print("code value", messages.data, value)
-                return value
+                return message_content.text.value
     if run.status == "failed" and not reattempted:
-
         time.sleep(40)
-        return self.plots2(prompt=prompt, reattempted=True)
-
-    print(run.status)
-    print(run)
+        return self.plots(metric=metric, reattempted=True)
     return "Error in analysis"
 
   def chat_prompt(self, instructions="", prompt=None):
-    # thread = self.client.beta.threads.create(messages = [{"role": "user", "content": prompt}])
     message = self.client.beta.threads.messages.create(thread_id=self.chatthread.id, role="user", content=prompt)
-
     run = self.client.beta.threads.runs.create_and_poll(
     thread_id=self.chatthread.id,
     assistant_id=self.assistant.id,
-    instructions="Answer in 100 words maximum. Do not use any latex at all! All calculations must be written in plain text"
+    instructions="Answer in 100 words maximum. Do not use any latex at all. All calculations must be written in plain text"
     )
     if run.status == 'completed': 
       messages = self.client.beta.threads.messages.list(thread_id=self.chatthread.id,)
-
-      
       if messages.data:
-          # return value
           return messages.data[0].content[0].text.value.replace("\n\n", "\n")
     return "Error in prompt"
   
@@ -249,6 +214,35 @@ class AIModel:
       else:
         parts.append(full_section[i:i+100])
     return parts
+  
+  def mda_score2(self):
+    thread = self.client.beta.threads.create(messages = [{"role": "user", "content": "Return the entire Management Discussion and Analysis section as plain text"}])
+    run = self.client.beta.threads.runs.create_and_poll(
+    thread_id=thread.id,
+    assistant_id=self.assistant.id,
+    instructions="Return the entire text of the most recent Management Discussion and Analysis section from the documents in the vector store"
+    )
+    # tokenizer = BertTokenizer.from_pretrained('yiyanghkust/finbert-tone')
+    # model = BertForSequenceClassification.from_pretrained('yiyanghkust/finbert-tone')
+    # model.eval()
+
+    if run.status == 'completed': 
+      messages = self.client.beta.threads.messages.list(thread_id=thread.id)
+
+      
+      if messages.data:
+          # return value
+          content = messages.data[0].content[0].text.value
+      else:
+        return None
+    pipe = pipeline("text-classification", model="ProsusAI/finbert")
+    attempt = pipe(content[:511])
+    print("ATTEMPT", attempt)
+    attempt2 = pipe(content)
+    print("ATTEMPT2", attempt2)
+
+    return 50
+    
   def mda_score(self):
 
     thread = self.client.beta.threads.create(messages = [{"role": "user", "content": "Return the entire Management Discussion and Analysis section as plain text"}])
@@ -261,7 +255,7 @@ class AIModel:
     # tokenizer = BertTokenizer.from_pretrained('yiyanghkust/finbert-tone')
     # model = BertForSequenceClassification.from_pretrained('yiyanghkust/finbert-tone')
     # model.eval()
-
+    
     if run.status == 'completed': 
       messages = self.client.beta.threads.messages.list(thread_id=thread.id)
 

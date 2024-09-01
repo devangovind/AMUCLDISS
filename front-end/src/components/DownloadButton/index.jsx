@@ -15,7 +15,6 @@ import Iconify from "../Iconify";
 
 const DownloadButton = () => {
   const handleDownload = async () => {
-    console.log("Download");
     const response = await fetch("http://localhost:8000/download-ppt/", {
       method: "GET",
       headers: {

@@ -42,8 +42,6 @@ const DragUpload = ({
     if (selectedFiles && selectedFiles.length > 0) {
       const newFiles = Array.from(selectedFiles);
       const filesToBeAdded = newFiles.filter((elem) => !files.includes(elem));
-      console.log(newFiles, files, filesToBeAdded, selectedFiles);
-      console.log(typeof files);
       setFiles((prevFiles) => [...prevFiles, ...filesToBeAdded]);
     }
   };
@@ -61,9 +59,9 @@ const DragUpload = ({
     setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
   };
 
-  useEffect(() => {
-    onFilesSelected && onFilesSelected(files);
-  }, [files, onFilesSelected]);
+  // useEffect(() => {
+  //   onFilesSelected && onFilesSelected(files);
+  // }, [files, onFilesSelected]);
 
   useEffect(() => {
     if (additionalMetric.trim() === "") {
@@ -79,9 +77,7 @@ const DragUpload = ({
 
   const addMetric = () => {
     const newMetric = additionalMetric.replace(/\s+/g, "").toLowerCase();
-    console.log(chips, additionalMetric, newMetric);
     const metricAsChip = { key: newMetric, label: additionalMetric };
-    console.log(chips.includes(metricAsChip));
     const chipExists = chips.some((item) => item.key === newMetric);
     if (chipExists) {
       const chipSelected = selectedChips.some((item) => item.key === newMetric);
@@ -121,7 +117,8 @@ const DragUpload = ({
           Drag and drop your files here
         </Typography>
         <Typography variant="body1" sx={{ padding: 2 }}>
-          Limit 15MB per file. Supported files: .PDF, .DOCX, .PPTX, .TXT, .XLSX
+          Limit 15MB per file. Supported files: .PDF, .DOCX, .PPTX, .TXT, .XLSX,
+          .CSV
         </Typography>
 
         <input
@@ -129,7 +126,7 @@ const DragUpload = ({
           hidden
           id="browse"
           onChange={handleFileChange}
-          accept=".pdf,.docx,.pptx,.txt,.xlsx"
+          accept=".pdf,.docx,.pptx,.txt,.xlsx,.csv"
           multiple
         />
         <label htmlFor="browse">Browse files</label>

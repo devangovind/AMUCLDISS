@@ -73,12 +73,13 @@ def parse_code(text):
         return code[6:]
     return code
 
-def gen_plots2(code):
+def gen_plots(code):
     try:
         exec(code)
-        return
+        return True
     except Exception as e:
         print("genplots exception", code, e)
+        return False
 
 
 def gen_plots3(years, data):
@@ -130,7 +131,7 @@ class main_AIModel:
     def chat_prompt(self, prompt):
         return self.model.chat_prompt(prompt=prompt)
     def mda_score(self):
-        return self.model.mda_score()
+        return self.model.mda_score2()
 
 class main_PPT:
     _instance = None
@@ -180,34 +181,33 @@ async def prompt(request: Request):
     else:
         res = model.analyse(prompt_text)
     ppt.add_content(prompt_text, res)
-    return StreamingResponse(streamed_res(format_to_html(res)), media_type='text/event-stream')
+    return PlainTextResponse(format_to_html(res))
 
 @app.post("/plotprompt/")
 async def plotprompt(request: Request):
     prompt = await request.body()
     prompt_text = prompt.decode('utf-8')
-    ppt_slide = prompt_text.split()[0]
+    plot_prompt_text = prompt_text.replace(" ", "").lower()
     model = main_AIModel()
-    print("plotprompt prompttt", prompt_text)
-    if prompt_text == "businessoverview":
-        print('here, should be here once only')
+    if plot_prompt_text == "businessoverview":
         return ""
-    res = model.plot_prompt(prompt_text)
+    res = model.plot_prompt(plot_prompt_text)
     code_part = parse_code(res)
-    print("parssed code", code_part)
-    gen_plots2(code_part)
+    if gen_plots(code_part):
+        pass
+    # add retry functionality 
     ppt = main_PPT()
     ppt.add_images(prompt_text)
     return res
 
-@app.post("/mdascore")
-async def mda_score():
+@app.get("/mdascore")
+def mda_score():
     model = main_AIModel()
     res = model.mda_score()
     return res
 
 @app.post("/chatprompt/")
-async def ask_chat_prompt(request: Request):
+async def chat_prompt(request: Request):
     prompt = await request.body()
     prompt_text = prompt.decode('utf-8')
     model = main_AIModel()
@@ -218,20 +218,19 @@ async def ask_chat_prompt(request: Request):
 def download_ppt():
     ppt = main_PPT()
     file_path = ppt.output_path
-    print("UPDATED TO SEE")
-    return FileResponse(file_path, media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation", filename="analysis.pptx")
+    return FileResponse(file_path, 
+                        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation", 
+                        filename="analysis.pptx")
 
 
 
 @app.get("/list-images")
-def list_images(image_context = Query(None, alias="context")):
-    print(image_context)
+def list_images(image_context = Query(None, alias="metric")):
+    print("IMAGE CONTEXT", image_context)
+    if not image_context:
+        return []
     with os.scandir(PLOT_DIR) as entries:
         files = [entry.name for entry in entries if entry.is_file() and image_context.lower() in entry.name.lower()]
-    if image_context == "":
-        with os.scandir(PLOT_DIR) as entries:
-            files = [entry.name for entry in entries if entry.is_file() if "revenue" not in entry.name.lower() and "operating" not in entry.name.lower() and "cash" not in entry.name.lower()]
-    print(files)
     return files
 
 

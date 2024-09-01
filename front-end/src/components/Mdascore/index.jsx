@@ -27,7 +27,7 @@ const Mdascore = ({ score }) => {
 
   return (
     <Stack flexDirection="row" alignItems="center">
-      <Typography fontSize="xl" paddingY={1.75} fontWeight="bold">
+      <Typography variant="h5" fontWeight="bold" padding={2}>
         Sentiment Score:
       </Typography>
       <svg height="80" width="80">

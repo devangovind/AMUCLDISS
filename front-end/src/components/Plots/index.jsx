@@ -1,12 +1,12 @@
 import { Box, Grid, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
-function Plots({ isFinished, metric }) {
+function Plots({ metric }) {
   const [images, setImages] = useState([]);
 
   useEffect(() => {
     fetch(
-      `http://localhost:8000/list-images?context=${encodeURIComponent(metric)}`
+      `http://localhost:8000/list-images?metric=${encodeURIComponent(metric)}`
     )
       .then((response) => response.json())
       .then((data) => {
@@ -15,28 +15,8 @@ function Plots({ isFinished, metric }) {
         );
       })
       .catch((error) => console.error("Error fetching images:", error));
-  }, [isFinished]);
+  }, []);
   return (
-    // <Box
-    //   sx={{
-    //     maxWidth: "100%",
-    //     display: "flex",
-    //     flexDirection: "column",
-    //     alignItems: "center",
-    //     overflow: "hidden",
-    //   }}
-    // >
-    //   {images.map((url, index) => (
-    //     <img
-    //       // maxWidth="100%"
-    //       width="120%"
-    //       key={index}
-    //       src={url}
-    //       alt={`Dynamic ${index}`}
-    //       style={{ objectFit: "contain" }}
-    //     />
-    //   ))}
-    // </Box>
     <>
       {images.map((url, index) => (
         <Grid

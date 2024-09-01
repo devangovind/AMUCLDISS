@@ -30,23 +30,21 @@ class PPT:
         slide.shapes.title.text = f"{metric} figures"
         images = []
         metric = metric.replace(" ", "").lower()
-
         for file in os.listdir("plots"):
             if metric in file:
                 images.append(os.path.join("plots", file))
-        
-        x = 0
+        column_counter = 0
         row_counter = 0
         for image in images:
-            print("images add to ppt", x)
-            slide.shapes.add_picture(image, Inches(1+x), Inches(1.5+((row_counter//2)*3)), Inches(5))
-            #                               left, top, width, height
+            slide.shapes.add_picture(image, Inches(1+column_counter), Inches(1.5+((row_counter//2)*3)), Inches(5))
+            #                               left,           top,                            width, 
             row_counter += 1
-            x+= 5.5
+            column_counter+= 5.5
             if row_counter % 2  == 0:
-                x = 0
+                column_counter = 0
         self.presentation.save(self.outputpath)
         
+
 
 
 
@@ -155,11 +153,7 @@ class PPT:
                 #                               left, top, width, height
                 row_counter += 1
                 x+= 4
-
         self.presentation.save(self.outputpath)
         return 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     # print(os.path.join("pres", "input.pptx"))
-    ppt = CreatePPT()
-    # print(ppt.update_title("n"))
-    ppt.add_content("test", "conent")

@@ -20,7 +20,6 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
         },
         body: metrics[i].label,
       });
-
       await fetch("http://localhost:8000/plotprompt/", {
         method: "POST",
         headers: {
@@ -28,44 +27,36 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
         },
         body: metric,
       });
+      const content = await response.text();
       setFinishedResponses((prev) => ({ ...prev, [metric]: true }));
-
-      await gensection(response, metric);
+      streamContent(content, metric);
     }
     setSubmitted(true);
   };
 
-  const gensection = async (response, metric) => {
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder("utf-8");
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      const chunk = decoder.decode(value, { stream: true });
-
-      // Update the state for the specific metric
+  const streamContent = (content, metric, index = 0) => {
+    if (index < content.length) {
       setResponseTexts((prev) => ({
         ...prev,
-        [metric]: (prev[metric] || "") + chunk,
+        [metric]: (prev[metric] || "") + content[index],
       }));
+
+      setTimeout(() => {
+        streamContent(content, metric, index + 1);
+      }, 5);
     }
   };
 
   // Kick off the fetching and streaming when the component mounts or when metrics change
   useEffect(() => {
-    if (metrics.length > 0) {
-      fetchAndStreamMetrics();
-    }
+    fetchAndStreamMetrics();
   }, []);
   const getMdaScore = async () => {
     const mda_response = await fetch("http://localhost:8000/mdascore/", {
-      method: "POST",
+      method: "GET",
       headers: {
-        "Content-Type": "text/plain", // Explicitly declare the content type
+        "Content-Type": "text/plain",
       },
-      body: "",
     });
 
     const text = await mda_response.text();
@@ -87,19 +78,19 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
         <>
           {metric.key === "businessoverview" ? (
             <>
-              <Typography variant="subtitle" fontWeight="bold">
-                {metric.label}
+              <Typography variant="h5" fontWeight="bold" padding={2}>
+                aSd
               </Typography>
               <Typography
                 sx={{ flexGrow: "auto", whiteSpace: "pre-wrap" }}
                 dangerouslySetInnerHTML={{ __html: responseTexts[metric.key] }}
-                marginBottom={10}
+                marginBottom={5}
                 marginX={2}
               />
             </>
           ) : (
             <>
-              <Typography variant="subtitle" fontWeight="bold">
+              <Typography variant="h5" fontWeight="bold" padding={2}>
                 {metric.label}
               </Typography>
               <Grid
@@ -109,8 +100,9 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
                   flexDirection: "row",
                   flexWrap: "wrap",
                   justifyContent: "space-between",
+                  alignItems: "flex-start",
                 }}
-                paddingBottom={1}
+                paddingBottom={5}
               >
                 {/* Text Section */}
                 <Grid
@@ -124,7 +116,6 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
                       dangerouslySetInnerHTML={{
                         __html: responseTexts[metric.key],
                       }}
-                      marginBottom={10}
                       marginX={2}
                     />
                   </Box>
@@ -132,41 +123,13 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
                 {/* Spacing */}
 
                 {/* Image Section */}
-
-                <Plots
-                  isFinished={finishedResponses[metric.key]}
-                  metric={metric.key}
-                />
+                {finishedResponses[metric.key] && <Plots metric={metric.key} />}
               </Grid>
             </>
           )}
         </>
       ))}
 
-      {/* <>
-              <Typography variant="subtitle" fontWeight="bold">
-                {metric.label}
-              </Typography>
-              <Stack flexDirection="row">
-                <Box maxWidth="55%">
-                  <Typography
-                    sx={{ flexGrow: "auto", whiteSpace: "pre-wrap" }}
-                    dangerouslySetInnerHTML={{
-                      __html: responseTexts[metric.key],
-                    }}
-                    marginBottom={10}
-                    marginX={2}
-                  />
-                </Box>
-                <Box maxWidth="35%">
-                  <Plots
-                    isFinished={finishedResponses[metric.key]}
-                    metric={metric.key}
-                  />
-                </Box>
-              </Stack>
-            </> */}
-      {/* )} */}
       {includeSentiment && <Mdascore score={mdaScore} />}
     </>
   );
