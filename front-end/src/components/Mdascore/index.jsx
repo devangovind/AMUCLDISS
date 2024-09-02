@@ -19,8 +19,10 @@ const Mdascore = ({ score }) => {
     scoreColor = "#9f9f00";
   } else if (score >= 50) {
     scoreColor = "#9f6f00";
-  } else {
+  } else if (score < 50) {
     scoreColor = "#9f4000";
+  } else {
+    scoreColor = "#ffffff0";
   }
 
   return (

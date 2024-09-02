@@ -4,12 +4,16 @@ import {
   Card,
   Container,
   Divider,
+  Icon,
+  IconButton,
   Input,
   Stack,
   Typography,
   useTheme,
 } from "@mui/material";
+import { Icon as Icon2 } from "@iconify/react";
 import { useEffect, useState } from "react";
+import Iconify from "../Iconify";
 
 const Chatbot = () => {
   const [open, setOpen] = useState(false);
@@ -123,20 +127,18 @@ const Chatbot = () => {
           borderRadius="5px"
           backgroundColor={theme.palette.am.dark}
         >
-          <Typography
-            fontWeight="bold"
-            color="white"
-            marginLeft={1}
-            // inputProps={{
-            //   "data-testid": "chat-bot",
-            // }}
-            aria-label="chat-bot"
-          >
+          <Typography fontWeight="bold" color="white" marginLeft={1}>
             AI Financial Advisor
           </Typography>
-          <Button onClick={() => toggleOpen()} aria-label="chat-bot-toggle">
-            {open ? "Close" : "Open"}
-          </Button>
+          <IconButton onClick={() => toggleOpen()}>
+            <Iconify
+              icon={
+                open
+                  ? "material-symbols:keyboard-arrow-down"
+                  : "material-symbols:keyboard-arrow-up"
+              }
+            />
+          </IconButton>
         </Stack>
         {open && (
           <>
@@ -163,45 +165,40 @@ const Chatbot = () => {
               justifyContent="space-between"
               position="sticky"
               bottom={-1}
-              paddingBottom={1}
-              alignItems="baseline"
+              paddingY={0.5}
+              alignItems="center"
               borderRadius="10px"
               // backgroundColor={theme.palette.grey[700]}
               backgroundColor={theme.palette.am.dark}
-
-              // flexDirection="row"
-              // sx={{
-              //   // bottom: "0px",
-              //   // position: "fixed",
-              //   // padding: "10px",
-              //   // width: "330px",
-              //   borderRadius: "2px",
-              //   backgroundColor: theme.palette.grey[700],
-              // }}
-              // justifyContent="space-between"
-              // alignItems="center"
             >
               <Input
                 placeholder="Enter document prompt..."
                 variant="contained"
                 multiline={true}
                 sx={{
-                  width: "70%",
-                  marginLeft: "10px",
+                  width: "80%",
+                  marginLeft: "20px",
                   color: theme.palette.common.white,
                 }}
                 value={currMessage}
                 onChange={_handleInputChange}
                 disabled={inputDisabled}
               />
-              <Button
+              {/* <Button
                 onClick={() => sendMessage()}
                 disabled={sendDisabled}
                 sx={{ marginRight: "10px" }}
                 aria-label="chat-bot-send"
               >
                 Send
-              </Button>
+              </Button> */}
+              <IconButton
+                onClick={() => sendMessage()}
+                disabled={sendDisabled}
+                sx={{ marginRight: "10px" }}
+              >
+                <Iconify icon="bi:send-fill" />
+              </IconButton>
             </Stack>
           </>
         )}

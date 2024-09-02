@@ -122,7 +122,7 @@ export function palette(mode) {
     action: {
       ...base.action,
       active: grey[500],
-      customHover: alpha(grey[500], 0.08),
+      customHover: alpha(am.main, 0.2),
     },
   };
   const light = {
