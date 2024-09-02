@@ -272,7 +272,7 @@ async def ask_prompt(request: Request):
     res = model.ask_metric(prompt_text)
     # ppt.update_slide(ppt_slide.lower(),ppt_slide.lower(), res)
     ppt.add_content(prompt_text, res)
-    return StreamingResponse(streamed_res(format_to_html(res)), media_type='text/event-stream')
+    return PlainTextResponse(format_to_html(res))
 
 @app.post("/plotprompt/")
 async def ask_plots(request: Request):

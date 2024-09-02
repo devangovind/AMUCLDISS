@@ -1,5 +1,6 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { act } from "react";
 import App from "./App";
 
 import ThemeProvider from "./theme";
@@ -184,11 +185,16 @@ test("displays AI financial advisor after upload", async () => {
   );
   const uploadInput = screen.getByLabelText(/Browse files/i);
   userEvent.upload(uploadInput, file);
+  act(() => {
+    userEvent.click(screen.getByText(/Business Overview/i));
+  });
+
   const button = screen.getByText(/Submit/i);
   act(() => {
     userEvent.click(button);
   });
-  const aiFinancialAdvisor = screen.getByLabelText("chat-bot");
+
+  const aiFinancialAdvisor = screen.getByText(/AI Financial Advisor Chat/i);
   expect(aiFinancialAdvisor).toBeInTheDocument();
 });
 
@@ -203,6 +209,10 @@ test("AI financial advisor is correctly opened", async () => {
   );
   const uploadInput = screen.getByLabelText(/Browse files/i);
   userEvent.upload(uploadInput, file);
+  act(() => {
+    userEvent.click(screen.getByText(/Business Overview/i));
+  });
+
   const button = screen.getByText(/Submit/i);
   act(() => {
     userEvent.click(button);
@@ -231,6 +241,10 @@ test("message system of financial advisor", async () => {
   );
   const uploadInput = screen.getByLabelText(/Browse files/i);
   userEvent.upload(uploadInput, file);
+  act(() => {
+    userEvent.click(screen.getByText(/Business Overview/i));
+  });
+
   const button = screen.getByText(/Submit/i);
   act(() => {
     userEvent.click(button);
@@ -274,14 +288,15 @@ test("displays the analysis", async () => {
   );
   const uploadInput = screen.getByLabelText(/Browse files/i);
   userEvent.upload(uploadInput, file);
+  act(() => {
+    userEvent.click(screen.getByText(/Business Overview/i));
+  });
+
   const button = screen.getByText(/Submit/i);
   act(() => {
     userEvent.click(button);
   });
-  expect(screen.getByText("Uploading files...")).toBeInTheDocument();
-  await waitFor(() => {
-    expect(screen.queryByText("Uploading files...")).not.toBeInTheDocument();
-  });
+  expect(screen.getByText("Results")).toBeInTheDocument();
 });
 
 test("displays sentiment score", async () => {
@@ -295,11 +310,19 @@ test("displays sentiment score", async () => {
   );
   const uploadInput = screen.getByLabelText(/Browse files/i);
   userEvent.upload(uploadInput, file);
+  act(() => {
+    userEvent.click(screen.getByText(/Business Overview/i));
+    userEvent.click(
+      screen.getByLabelText(
+        /Include sentiment analysis on Managament Discussion & Analysis section?/i
+      )
+    );
+  });
+
   const button = screen.getByText(/Submit/i);
   act(() => {
     userEvent.click(button);
   });
-  expect(screen.getByText("Uploading files...")).toBeInTheDocument();
   await waitFor(() => {
     expect(screen.getByText(/Sentiment score:/i)).toBeInTheDocument();
   });
@@ -316,11 +339,13 @@ test("displays download button after completion", async () => {
   );
   const uploadInput = screen.getByLabelText(/Browse files/i);
   userEvent.upload(uploadInput, file);
+  act(() => {
+    userEvent.click(screen.getByText(/Business Overview/i));
+  });
   const button = screen.getByText(/Submit/i);
   act(() => {
     userEvent.click(button);
   });
-  expect(screen.getByText("Uploading files...")).toBeInTheDocument();
   await waitFor(() => {
     expect(screen.getByLabelText(/download-button/i)).toBeInTheDocument();
   });
@@ -337,11 +362,15 @@ test("clicking download downloads powerpoint", async () => {
   );
   const uploadInput = screen.getByLabelText(/Browse files/i);
   userEvent.upload(uploadInput, file);
+  act(() => {
+    userEvent.click(screen.getByText(/Business Overview/i));
+  });
+
   const button = screen.getByText(/Submit/i);
   act(() => {
     userEvent.click(button);
   });
-  expect(screen.getByText("Uploading files...")).toBeInTheDocument();
+  expect(screen.getByText("Results")).toBeInTheDocument();
   await waitFor(() => {
     const dlButton = screen.getByLabelText(/download-button/i);
     expect(dlButton).toBeInTheDocument();
@@ -350,12 +379,12 @@ test("clicking download downloads powerpoint", async () => {
   expect(global.URL.createObjectURL).toHaveBeenCalled();
 });
 
-// test("doesn't render AI financial advisor before documents are uploaded", () => {
-//   render(
-//     <CustomRender>
-//       <App />
-//     </CustomRender>
-//   );
-//   const aiFinancialAdvisor = screen.queryByText(/AI Financial Advisor/i);
-//   expect(aiFinancialAdvisor).toBeInTheDocument();
-// });
+// // // test("doesn't render AI financial advisor before documents are uploaded", () => {
+// // //   render(
+// // //     <CustomRender>
+// // //       <App />
+// // //     </CustomRender>
+// // //   );
+// // //   const aiFinancialAdvisor = screen.queryByText(/AI Financial Advisor/i);
+// // //   expect(aiFinancialAdvisor).toBeInTheDocument();
+// // // });

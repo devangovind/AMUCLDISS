@@ -128,9 +128,9 @@ const Chatbot = () => {
           backgroundColor={theme.palette.am.dark}
         >
           <Typography fontWeight="bold" color="white" marginLeft={1}>
-            AI Financial Advisor
+            AI Financial Advisor Chat
           </Typography>
-          <IconButton onClick={() => toggleOpen()}>
+          <IconButton onClick={() => toggleOpen()} aria-label="chat-bot-toggle">
             <Iconify
               icon={
                 open
@@ -196,6 +196,7 @@ const Chatbot = () => {
                 onClick={() => sendMessage()}
                 disabled={sendDisabled}
                 sx={{ marginRight: "10px" }}
+                aria-label="chat-bot-send"
               >
                 <Iconify icon="bi:send-fill" />
               </IconButton>
