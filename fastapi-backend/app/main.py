@@ -237,5 +237,8 @@ def list_images(image_context = Query(None, alias="metric")):
 
 
 if __name__ == '__main__':
+    with os.scandir(PLOT_DIR) as existing_plots:
+        for plot in existing_plots:
+            os.remove(plot.path)
     import uvicorn
     uvicorn.run(app, host='0.0.0.0', port=8000)

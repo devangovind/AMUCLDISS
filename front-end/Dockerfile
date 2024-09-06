@@ -4,15 +4,14 @@ WORKDIR /app
 
 COPY package.json ./
 
-# Install dependencies including Prisma CLI
+
 RUN npm install
 
 
-# Copy the rest of app's source code
-COPY . .
+COPY ./src .
+COPY ./public .
 
 
-# Run container on port 3000
 EXPOSE 3000
 
 CMD ["npm", "start"]

@@ -1,0 +1,18 @@
+services:
+  backend:
+    build: ./fastapi-backend
+    container_name: fastapi-application
+    environment:
+      PORT: 8000
+    env_file:
+      - .env
+    volumes:
+      - ./fastapi-backend/app:/app
+    ports:
+      - "8000:8000"
+    command: ["python3", "main.py"]
+  frontend:
+    build: ./front-end
+    container_name: frontend_c
+    ports:
+      - "3000:3000"
