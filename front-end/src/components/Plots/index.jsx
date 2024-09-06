@@ -1,21 +1,22 @@
 import { Box, Grid, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
-function Plots({ metric }) {
-  const [images, setImages] = useState([]);
+function Plots({ images }) {
+  console.log("in plots", images);
+  // const [images, setImages] = useState([]);
 
-  useEffect(() => {
-    fetch(
-      `http://localhost:8000/list-images?metric=${encodeURIComponent(metric)}`
-    )
-      .then((response) => response.json())
-      .then((data) => {
-        setImages(
-          data.map((filename) => `http://localhost:8000/images/${filename}`)
-        );
-      })
-      .catch((error) => console.error("Error fetching images:", error));
-  }, []);
+  // useEffect(() => {
+  //   fetch(
+  //     `http://localhost:8000/list-images?metric=${encodeURIComponent(metric)}`
+  //   )
+  //     .then((response) => response.json())
+  //     .then((data) => {
+  //       setImages(
+  //         data.map((filename) => `http://localhost:8000/images/${filename}`)
+  //       );
+  //     })
+  //     .catch((error) => console.error("Error fetching images:", error));
+  // }, []);
   return (
     <>
       {images.map((url, index) => (

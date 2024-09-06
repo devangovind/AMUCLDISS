@@ -275,6 +275,7 @@ const DragDropBox = styled(Card)(({ theme }) => ({
   flexGrow: "auto",
   borderStyle: "dashed",
   borderColor: theme.palette.am.main,
+  borderWidth: 2,
 }));
 
 const ChipsWithCheckboxGroup = ({ chips, selectedChips, setSelectedChips }) => {

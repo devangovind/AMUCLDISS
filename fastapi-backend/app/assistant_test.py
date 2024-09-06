@@ -50,9 +50,17 @@ model = "gpt-4o"
 class AIModel:
   def __init__(self):
     self.client = AzureOpenAI(api_key=AI_API_KEY, azure_endpoint=AI_ENDPOINT, api_version="2024-05-01-preview")
-    self.assistant = self.client.beta.assistants.create(name="Finance Visualisation", 
-                                                        instructions=f"You are a finance assistant. Your job is to interpret financial documents and provide analysis based on it. Compare to the wider industry where possible. For new lines signify via newline character in python. To make something a title rather than use ###, wrap it in <h3> tags. To make a subtitle/bold, wrap it in **. Don't present any calculations only present the answer.DO NOT USE ANY LaTeX!! There should be NO partial calculations without a final evaluated answer!! All code produced needs to be in a single ``` block. Do not speak in the first person. The data you read from in the vector store will likely be annual or quarterly report so in the analysis take into account the timeframe of the data and specify if its just quarterly. Remember to look at whether the quantitative values are positive or negative (indicated by () or the caption (loss)). When analysing and reading the documents focus on quantitative data. Do not include the citations/sources at all in the response",tools=[{"type": "file_search"}, {"type": "code_interpreter"}],
-                                          model="gpt-4o")
+    self.assistant = self.client.beta.assistants.create(name="Finance Analysis", 
+                        instructions=f"You are a finance assistant. \
+                        Your job is to interpret financial documents and provide analysis based on it. \
+                        Compare to the wider industry where possible. \
+                        For new lines signify via newline character in python. \
+                        Don't present any calculations only present the answer. Do not use LaTeX. \
+                        There should be no partial calculations without a final evaluated answer. \
+                        Do not speak in the first person. \
+                        When analysing and reading the documents focus on quantitative data. ",
+                        tools=[{"type": "file_search"}, {"type": "code_interpreter"}],
+                        model="gpt-4o")
     self.chatthread = self.client.beta.threads.create()
     self.threads_dict = {}
     
@@ -157,8 +165,8 @@ class AIModel:
                     cashflow and operating income) can be broken down into segments and these should all \
                     be on a single plot with the total. Don't have multiple plots that show the same data. \
                     Use all time frame data from all consolidated statements in the plots. \
-                    Don't include plt.show() in the code. The x-axis should ONLY have labels for the xaxis \
-                    points with data. If data is not avaiable/cannot be calculated DO NOT make up fake data, \
+                    Don't include plt.show() in the code. The x-axis should only have labels for the xaxis \
+                    points with data. If data is not avaiable/cannot be calculated do not make up fake data, \
                     just ignore the plot completely! Make a maximum of 3 plots, so present only the most \
                     relevant data for {metric}. Make each plot have figsize=(10,6). \
                     Make the code compatible to be run via python exec(). {instructions}"
@@ -208,7 +216,7 @@ class AIModel:
   #   return "Error in prompt"
   def mda_chunks(self, full_section):
     parts = []
-    for i in range(0,len(full_section), 100):
+    for i in range(0,len(full_section), 511):
       if i+100 > len(full_section):
         parts.append(full_section[i:])
       else:
@@ -225,7 +233,6 @@ class AIModel:
     # tokenizer = BertTokenizer.from_pretrained('yiyanghkust/finbert-tone')
     # model = BertForSequenceClassification.from_pretrained('yiyanghkust/finbert-tone')
     # model.eval()
-
     if run.status == 'completed': 
       messages = self.client.beta.threads.messages.list(thread_id=thread.id)
 
@@ -236,10 +243,10 @@ class AIModel:
       else:
         return None
     pipe = pipeline("text-classification", model="ProsusAI/finbert")
+
     attempt = pipe(content[:511])
     print("ATTEMPT", attempt)
-    attempt2 = pipe(content)
-    print("ATTEMPT2", attempt2)
+    
 
     return 50
     

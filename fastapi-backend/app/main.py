@@ -131,7 +131,7 @@ class main_AIModel:
     def chat_prompt(self, prompt):
         return self.model.chat_prompt(prompt=prompt)
     def mda_score(self):
-        return self.model.mda_score2()
+        return self.model.mda_score()
 
 class main_PPT:
     _instance = None
@@ -146,6 +146,7 @@ class main_PPT:
         self.pptobj.update_title(title)
     def add_images(self, metric):
         self.pptobj.add_images(metric)
+
     
 
 
@@ -217,7 +218,7 @@ async def chat_prompt(request: Request):
 @app.get("/download-ppt/")
 def download_ppt():
     ppt = main_PPT()
-    file_path = ppt.output_path
+    file_path = ppt.outputpath
     return FileResponse(file_path, 
                         media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation", 
                         filename="analysis.pptx")
