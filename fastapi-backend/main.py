@@ -23,20 +23,19 @@ load_dotenv()
 app = FastAPI()
 
 # Ensure you set your OpenAI API key and endpoint in the environment variables
-api_key = os.getenv('AZURE_OPENAI_API_KEY')
-azure_endpoint = os.getenv('AZURE_OPENAI_ENDPOINT')
+
 api_version = "2023-07-01-preview"
 PLOT_DIR = "./plots"
 
-if not api_key or not azure_endpoint:
-    raise ValueError("AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT must be set in the environment variables")
+def check_env():
+    api_key = os.getenv('AZURE_OPENAI_API_KEY')
+    azure_endpoint = os.getenv('AZURE_OPENAI_ENDPOINT')
+    if not api_key or not azure_endpoint:
+        raise ValueError("AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT must be set in the environment variables")
 
-client = AzureOpenAI(
-    api_key=api_key,
-    azure_endpoint=azure_endpoint,
-    api_version=api_version,
-)
-
+@app.on_event("startup")
+async def on_startup():
+    check_env()
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -51,37 +50,6 @@ app.mount("/images", StaticFiles(directory=PLOT_DIR), name="images")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Define a function to chunk the input text based on tokens
-def chunk_text(text, max_tokens=4096):
-    enc = tiktoken.get_encoding("cl100k_base")
-    tokens = enc.encode(text)
-    for i in range(0, len(tokens), max_tokens):
-        yield enc.decode(tokens[i:i + max_tokens])
-
-def get_openai_generator(prompt: str):
-    try:
-        for chunk in chunk_text(prompt, 3000):  # Adjust chunk size to ensure it's within limits
-            response = client.chat.completions.create(
-                model="gpt-4",  # Use GPT-4 model
-                messages=[{"role": "user", "content": chunk}],
-                temperature=0.0,
-                stream=True,
-            )
-            buffer = ""
-            for chunk_response in response:
-                choices = chunk_response.choices
-                if choices and choices[0].delta:
-                    content = getattr(choices[0].delta, 'content', None)
-                    if content:
-                        buffer += content
-                        if len(buffer) > 50:  # Buffer until at least 50 characters before yielding
-                            yield f"data: {buffer}\n\n"
-                            buffer = ""
-            if buffer.strip():  # Send any remaining buffer content
-                yield f"data: {buffer}\n\n"
-    except OpenAIError as e:
-        logger.error(f"Error during OpenAI streaming: {e}")
-        yield f"data: Error occurred: {str(e)}\n\n"
 
 
 def streamed_res(content):
@@ -342,4 +310,5 @@ def list_images(image_context = Query(None, alias="context")):
 
 if __name__ == '__main__':
     import uvicorn
+    check_env()
     uvicorn.run(app, host='0.0.0.0', port=8000)
