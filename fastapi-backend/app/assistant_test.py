@@ -222,33 +222,42 @@ class AIModel:
       else:
         parts.append(full_section[i:i+100])
     return parts
+
+  def yield_mda_chunks(self, full_section):
+    for i in range(0,len(full_section), 511):
+      if i+511 > len(full_section):
+        yield full_section[i:]
+      else:
+        yield full_section[i:i+511]
+
   
   def mda_score2(self):
     thread = self.client.beta.threads.create(messages = [{"role": "user", "content": "Return the entire Management Discussion and Analysis section as plain text"}])
     run = self.client.beta.threads.runs.create_and_poll(
     thread_id=thread.id,
     assistant_id=self.assistant.id,
-    instructions="Return the entire text of the most recent Management Discussion and Analysis section from the documents in the vector store"
+    instructions="Return the entire text of the most recent Management Discussion and Analysis section from the documents in the vector store and nothing else. The section may roll onto multiple pages, return the entire section as plain text"
     )
-    # tokenizer = BertTokenizer.from_pretrained('yiyanghkust/finbert-tone')
-    # model = BertForSequenceClassification.from_pretrained('yiyanghkust/finbert-tone')
-    # model.eval()
     if run.status == 'completed': 
       messages = self.client.beta.threads.messages.list(thread_id=thread.id)
-
-      
       if messages.data:
           # return value
           content = messages.data[0].content[0].text.value
       else:
         return None
     pipe = pipeline("text-classification", model="ProsusAI/finbert")
-
-    attempt = pipe(content[:511])
-    print("ATTEMPT", attempt)
-    
-
-    return 50
+    mda_labels = {"positive": 0, "neutral": 0, "negative": 0}
+    mda_chunked = self.yield_mda_chunks(content)
+    i = 0
+    # biases: pos = 100, neutal = 50, negative = 0
+    for chunk in mda_chunked:
+      new_sentiment = pipe(chunk)[0]
+      mda_labels[new_sentiment["label"]] += new_sentiment["score"]
+      i += 1
+    final_score = round((mda_labels["positive"]*100 + (i-mda_labels["negative"]-mda_labels["positive"])*50)/i)
+    for k,v in mda_labels.items():
+      mda_labels[k] = round(v/i, 2)
+    return f"{final_score},{mda_labels['positive']},{mda_labels['neutral']},{mda_labels['negative']}"
     
   def mda_score(self):
 

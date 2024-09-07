@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 
-const Mdascore = ({ score }) => {
+const Mdascore = ({ score, labelScores }) => {
   let scoreColor = "#000000";
   if (score >= 80) {
     scoreColor = "#027200";
@@ -22,29 +22,178 @@ const Mdascore = ({ score }) => {
   } else if (score < 50) {
     scoreColor = "#9f4000";
   } else {
-    scoreColor = "#ffffff0";
+    scoreColor = "#000000";
   }
 
   return (
-    <Stack flexDirection="row" alignItems="center">
+    <>
       <Typography variant="h5" fontWeight="bold" padding={2}>
-        Sentiment Score:
+        Sentiment Score
       </Typography>
-      <svg height="80" width="80">
-        <circle r="25" cx="40" cy="40" fill={scoreColor}></circle>
+      {score === null ? (
+        <Typography padding={2}>Analysing...</Typography>
+      ) : score === "Error generating score" ? (
+        <Typography>Error generating score</Typography>
+      ) : (
+        <Stack flexDirection="column">
+          <Stack flexDirection="row" alignItems="center">
+            <Typography fontWeight="bold" padding={2}>
+              Overall Score:
+            </Typography>
+            <svg height="80" width="80">
+              <circle r="25" cx="40" cy="40" fill={scoreColor}></circle>
 
-        <text
-          x="50%"
-          y="57%"
-          text-anchor="middle"
-          fill="white"
-          font-size="20px"
-        >
-          {score}
-        </text>
-      </svg>
-    </Stack>
+              <text
+                x="50%"
+                y="57%"
+                text-anchor="middle"
+                fill="white"
+                font-size="20px"
+              >
+                {score}
+              </text>
+            </svg>
+          </Stack>
+          <Stack flexDirection="row" alignItems="center">
+            <Stack flexDirection="row" alignItems="center">
+              <Typography padding={2}>Positive: </Typography>
+              <svg height="80" width="80">
+                <circle r="25" cx="40" cy="40" fill="green"></circle>
+
+                <text
+                  x="50%"
+                  y="57%"
+                  text-anchor="middle"
+                  fill="white"
+                  font-size="20px"
+                >
+                  {labelScores["positive"]}
+                </text>
+              </svg>
+            </Stack>
+            <Stack flexDirection="row" alignItems="center">
+              <Typography padding={2}>Neutral: </Typography>
+              <svg height="80" width="80">
+                <circle r="25" cx="40" cy="40" fill="orange"></circle>
+
+                <text
+                  x="50%"
+                  y="57%"
+                  text-anchor="middle"
+                  fill="white"
+                  font-size="20px"
+                >
+                  {labelScores["neutral"]}
+                </text>
+              </svg>
+            </Stack>
+            <Stack flexDirection="row" alignItems="center">
+              <Typography padding={2}>Negative: </Typography>
+              <svg height="80" width="80">
+                <circle r="25" cx="40" cy="40" fill="red"></circle>
+
+                <text
+                  x="50%"
+                  y="57%"
+                  text-anchor="middle"
+                  fill="white"
+                  font-size="20px"
+                >
+                  {labelScores["negative"]}
+                </text>
+              </svg>
+            </Stack>
+          </Stack>
+        </Stack>
+      )}
+    </>
   );
 };
 
 export default Mdascore;
+{
+  /* 
+<Stack flexDirection="column">
+      <Stack flexDirection="row" alignItems="center">
+      <Typography fontWeight="bold" padding={2}>
+        Overall Score:
+      </Typography>
+      {score !== null ? (
+        <>
+          {score === "Error generating score" ? (
+            <Typography>Error generating score</Typography>
+          ) : (
+            <Stack flexDirection="column">
+              <svg height="80" width="80">
+                <circle r="25" cx="40" cy="40" fill={scoreColor}></circle>
+
+                <text
+                  x="50%"
+                  y="57%"
+                  text-anchor="middle"
+                  fill="white"
+                  font-size="20px"
+                >
+                  {score}
+                </text>
+              </svg>
+              
+              <Stack flexDirection="row" alignItems="center">
+                <Stack flexDirection="row" alignItems="center">
+                  <Typography>Positive: </Typography>
+                  <svg height="80" width="80">
+                    <circle r="25" cx="40" cy="40" fill="green"></circle>
+
+                    <text
+                      x="50%"
+                      y="57%"
+                      text-anchor="middle"
+                      fill="white"
+                      font-size="20px"
+                    >
+                      {labelScores["positive"]}
+                    </text>
+                  </svg>
+                </Stack>
+                <Stack flexDirection="row">
+                  <Typography>Neutral: </Typography>
+                  <svg height="80" width="80">
+                    <circle r="25" cx="40" cy="40" fill="orange"></circle>
+
+                    <text
+                      x="50%"
+                      y="57%"
+                      text-anchor="middle"
+                      fill="white"
+                      font-size="20px"
+                    >
+                      {labelScores["neutral"]}
+                    </text>
+                  </svg>
+                </Stack>
+                <Stack flexDirection="row">
+                  <Typography>Negative: </Typography>
+                  <svg height="80" width="80">
+                    <circle r="25" cx="40" cy="40" fill="red"></circle>
+
+                    <text
+                      x="50%"
+                      y="57%"
+                      text-anchor="middle"
+                      fill="white"
+                      font-size="20px"
+                    >
+                      {labelScores["negative"]}
+                    </text>
+                  </svg>
+                </Stack>
+              </Stack>
+            </Stack>
+          )}
+        </>
+      ) : (
+        <Typography>Analysing...</Typography>
+      )}
+    </Stack>
+    </> */
+}

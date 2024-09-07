@@ -7,6 +7,7 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
   const [responseTexts, setResponseTexts] = useState({});
   const [finishedResponses, setFinishedResponses] = useState({});
   const [mdaScore, setmdaScore] = useState(null);
+  const [mdaLabelScores, setmdaLabelScores] = useState({});
   const [images, setImages] = useState({});
 
   const fetchAndStreamMetrics = async () => {
@@ -22,20 +23,18 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
 
     for (let i = 0; i < metrics.length; i++) {
       const metric = metrics[i].key;
-
       const response = await responses[i]; // Wait for the response of the current metric
       await fetch("http://localhost:8000/plotprompt/", {
         method: "POST",
         headers: {
           "Content-Type": "text/plain",
         },
-        body: metric,
+        body: metrics[i].label,
       });
       const imageNamesReq = await fetch(
         `http://localhost:8000/list-images?metric=${encodeURIComponent(metric)}`
       );
       const imageNames = await imageNamesReq.json();
-      console.log("imgnames", imageNames);
       setImages((prev) => {
         const newState = { ...prev };
         newState[metric] = imageNames.map(
@@ -90,14 +89,23 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
         "Content-Type": "text/plain",
       },
     });
-
     const text = await mda_response.text();
-
-    const mda_score = Math.round(
-      parseFloat(text.split(",")[0].replace(/"/g, ""), 10)
-    );
-
-    setmdaScore(isNaN(mda_score) ? null : mda_score);
+    console.log("text response", text);
+    if (text === null || text === "null") {
+      setmdaScore("Error generating score");
+    } else {
+      const scores = text.split(",");
+      const total_mda_score = parseFloat(scores[0].replace(/"/g, ""), 10);
+      const labelScores = {
+        positive: parseFloat(scores[1].replace(/"/g, ""), 10),
+        neutral: parseFloat(scores[2].replace(/"/g, ""), 10),
+        negative: parseFloat(scores[3].replace(/"/g, ""), 10),
+      };
+      setmdaLabelScores(labelScores);
+      setmdaScore(
+        isNaN(total_mda_score) ? "Error generating score" : total_mda_score
+      );
+    }
   };
   useEffect(() => {
     if (includeSentiment) {
@@ -162,7 +170,9 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
         </>
       ))}
 
-      {includeSentiment && <Mdascore score={mdaScore} />}
+      {includeSentiment && (
+        <Mdascore score={mdaScore} labelScores={mdaLabelScores} />
+      )}
     </>
   );
 };

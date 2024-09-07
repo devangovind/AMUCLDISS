@@ -32,7 +32,7 @@ if not api_key or not azure_endpoint:
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],  # React frontend origin
+    allow_origins=["http://localhost:3000"],  # React frontend origin
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -131,7 +131,7 @@ class main_AIModel:
     def chat_prompt(self, prompt):
         return self.model.chat_prompt(prompt=prompt)
     def mda_score(self):
-        return self.model.mda_score()
+        return self.model.mda_score2()
 
 class main_PPT:
     _instance = None
@@ -146,7 +146,10 @@ class main_PPT:
         self.pptobj.update_title(title)
     def add_images(self, metric):
         self.pptobj.add_images(metric)
-
+    def output_path(self):
+        return self.pptobj.outputpath
+    def add_mda(self, scores):
+        self.pptobj.add_mda(scores)
     
 
 
@@ -188,7 +191,8 @@ async def prompt(request: Request):
 async def plotprompt(request: Request):
     prompt = await request.body()
     prompt_text = prompt.decode('utf-8')
-    plot_prompt_text = prompt_text.replace(" ", "").lower()
+    print("plots", prompt_text)
+    plot_prompt_text = prompt.decode('utf-8').replace(" ", "").lower()
     model = main_AIModel()
     if plot_prompt_text == "businessoverview":
         return ""
@@ -204,7 +208,9 @@ async def plotprompt(request: Request):
 @app.get("/mdascore")
 def mda_score():
     model = main_AIModel()
+    ppt = main_PPT()
     res = model.mda_score()
+    ppt.add_mda(res)
     return res
 
 @app.post("/chatprompt/")
@@ -218,7 +224,7 @@ async def chat_prompt(request: Request):
 @app.get("/download-ppt/")
 def download_ppt():
     ppt = main_PPT()
-    file_path = ppt.outputpath
+    file_path = ppt.output_path()
     return FileResponse(file_path, 
                         media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation", 
                         filename="analysis.pptx")
@@ -227,7 +233,6 @@ def download_ppt():
 
 @app.get("/list-images")
 def list_images(image_context = Query(None, alias="metric")):
-    print("IMAGE CONTEXT", image_context)
     if not image_context:
         return []
     with os.scandir(PLOT_DIR) as entries:
@@ -240,5 +245,8 @@ if __name__ == '__main__':
     with os.scandir(PLOT_DIR) as existing_plots:
         for plot in existing_plots:
             os.remove(plot.path)
+    with os.scandir("./saved_files") as existing_files:
+        for f in existing_files:
+            os.remove(f.path)
     import uvicorn
     uvicorn.run(app, host='0.0.0.0', port=8000)
