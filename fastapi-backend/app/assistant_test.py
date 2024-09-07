@@ -143,9 +143,12 @@ class AIModel:
 #               if hasattr(message_content, "text"):
 #                  value = message_content.text.value
 
-  def plots(self, instructions="", metric=None, reattempted=False):
+  def plots(self, instructions="", metric=None, reattempted=False, customPrompt=""):
     thread_key = metric.replace(" ", "")
-    prompt = f"Generate the code to create plots that can be used to analyse the {metric} of the company. \
+    if customPrompt != "":
+      prompt = customPrompt
+    else:
+      prompt = f"Generate the code to create plots that can be used to analyse the {metric} of the company. \
               Use the time frame data from all consolidated statements in the plots. \
               Name the plots exactly {metric}_i where i increments for each plot.  \
               The plot should represent the analysis you previously conducted."

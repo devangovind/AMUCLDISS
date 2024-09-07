@@ -79,7 +79,7 @@ def gen_plots(code):
         return True
     except Exception as e:
         print("genplots exception", code, e)
-        return False
+        return e
 
 
 def gen_plots3(years, data):
@@ -126,8 +126,8 @@ class main_AIModel:
         return self.model.analyse(metric=metric, instructions=instructions)
     def company_name(self):
         return self.model.company_name()
-    def plot_prompt(self, prompt):
-        return self.model.plots(metric=prompt)
+    def plot_prompt(self, prompt, customPrompt=""):
+        return self.model.plots(metric=prompt, customPrompt=customPrompt)
     def chat_prompt(self, prompt):
         return self.model.chat_prompt(prompt=prompt)
     def mda_score(self):
@@ -198,9 +198,14 @@ async def plotprompt(request: Request):
         return ""
     res = model.plot_prompt(plot_prompt_text)
     code_part = parse_code(res)
-    if gen_plots(code_part):
-        pass
-    # add retry functionality 
+    code_result = gen_plots(code_part)
+    if  code_result != True:
+        # Retry functionality
+        new_prompt = f"This didn't work, i got the error {code_result}. Retry using the same instructions as before; \
+                        make code for plots for metric {plot_prompt_text}"
+        res = model.plot_prompt(prompt=plot_prompt_text, customPrompt=new_prompt)
+        code_part = parse_code(res)
+        code_result = gen_plots(code_part)
     ppt = main_PPT()
     ppt.add_images(prompt_text)
     return res

@@ -5,30 +5,25 @@ import Mdascore from "../Mdascore";
 
 const Response = ({ metrics, setSubmitted, includeSentiment }) => {
   const [responseTexts, setResponseTexts] = useState({});
-  const [finishedResponses, setFinishedResponses] = useState({});
   const [mdaScore, setmdaScore] = useState(null);
   const [mdaLabelScores, setmdaLabelScores] = useState({});
   const [images, setImages] = useState({});
+  const [analysisComplete, setanalysisComplete] = useState(false);
 
   const fetchAndStreamMetrics = async () => {
     const responses = metrics.map((metric) =>
       fetch("http://localhost:8000/prompt/", {
         method: "POST",
-        headers: {
-          "Content-Type": "text/plain",
-        },
+        headers: { "Content-Type": "text/plain" },
         body: metric.label,
       })
     );
-
     for (let i = 0; i < metrics.length; i++) {
       const metric = metrics[i].key;
       const response = await responses[i]; // Wait for the response of the current metric
       await fetch("http://localhost:8000/plotprompt/", {
         method: "POST",
-        headers: {
-          "Content-Type": "text/plain",
-        },
+        headers: { "Content-Type": "text/plain" },
         body: metrics[i].label,
       });
       const imageNamesReq = await fetch(
@@ -40,29 +35,12 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
         newState[metric] = imageNames.map(
           (filename) => `http://localhost:8000/images/${filename}`
         );
-        console.log("nState", newState);
-
         return newState;
       });
-
-      // await new Promise((resolve) => {
-      //   const checkImagesUpdate = () => {
-      //     console.log("tried");
-      //     if (images[metric]) {
-      //       resolve();
-      //     } else {
-      //       setTimeout(checkImagesUpdate, 100); // Check every 100ms
-      //     }
-      //   };
-      //   checkImagesUpdate();
-      // });
-
-      console.log("imagesssss", images);
       const content = await response.text();
-      setFinishedResponses((prev) => ({ ...prev, [metric]: true }));
       streamContent(content, metric);
     }
-    setSubmitted(true);
+    setanalysisComplete(true);
   };
 
   const streamContent = (content, metric, index = 0) => {
@@ -77,7 +55,6 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
       }, 5);
     }
   };
-  useEffect(() => {});
   // Kick off the fetching and streaming when the component mounts or when metrics change
   useEffect(() => {
     fetchAndStreamMetrics();
@@ -112,6 +89,15 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
       getMdaScore();
     }
   }, [includeSentiment]);
+  useEffect(() => {
+    if (
+      analysisComplete &&
+      mdaScore !== "Error generating score" &&
+      mdaScore !== null
+    ) {
+      setSubmitted(true);
+    }
+  }, [analysisComplete, mdaScore, setSubmitted]);
   return (
     <>
       {metrics.map((metric) => (
