@@ -130,12 +130,8 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
                 }}
                 paddingBottom={5}
               >
-                {/* Text Section */}
-                <Grid
-                  item
-                  xs={12} // Full width on small screens
-                  md={7}
-                >
+                {/* Text */}
+                <Grid item xs={12} md={7}>
                   <Box>
                     <Typography
                       sx={{ flexGrow: "auto", whiteSpace: "pre-wrap" }}
@@ -146,9 +142,7 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
                     />
                   </Box>
                 </Grid>
-                {/* Spacing */}
-
-                {/* Image Section */}
+                {/* Image */}
                 {images[metric.key] && <Plots images={images[metric.key]} />}
               </Grid>
             </>

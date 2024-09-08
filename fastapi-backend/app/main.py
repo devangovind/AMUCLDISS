@@ -131,7 +131,7 @@ class main_AIModel:
     def chat_prompt(self, prompt):
         return self.model.chat_prompt(prompt=prompt)
     def mda_score(self):
-        return self.model.mda_score2()
+        return self.model.mda_score()
 
 class main_PPT:
     _instance = None
@@ -217,6 +217,7 @@ def mda_score():
     res = model.mda_score()
     ppt.add_mda(res)
     return res
+
 
 @app.post("/chatprompt/")
 async def chat_prompt(request: Request):

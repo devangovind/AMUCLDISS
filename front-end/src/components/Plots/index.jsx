@@ -2,28 +2,13 @@ import { Box, Grid, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
 function Plots({ images }) {
-  console.log("in plots", images);
-  // const [images, setImages] = useState([]);
-
-  // useEffect(() => {
-  //   fetch(
-  //     `http://localhost:8000/list-images?metric=${encodeURIComponent(metric)}`
-  //   )
-  //     .then((response) => response.json())
-  //     .then((data) => {
-  //       setImages(
-  //         data.map((filename) => `http://localhost:8000/images/${filename}`)
-  //       );
-  //     })
-  //     .catch((error) => console.error("Error fetching images:", error));
-  // }, []);
   return (
     <>
       {images.map((url, index) => (
         <Grid
           item
-          xs={12} // Full width on small screens
-          md={5} // 5/12 of the width on medium and larger screens (~41.67%)
+          xs={12} // Full width on small screens i.e portrait view
+          md={5} // 5/12 of the width on medium and larger screens -> roughly 40%
           key={index}
           sx={{
             display: "flex",

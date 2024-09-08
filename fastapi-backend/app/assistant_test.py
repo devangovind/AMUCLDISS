@@ -232,19 +232,19 @@ class AIModel:
         yield full_section[i:]
       else:
         yield full_section[i:i+511]
-
-  
-  def mda_score2(self):
-    thread = self.client.beta.threads.create(messages = [{"role": "user", "content": "Return the entire Management Discussion and Analysis section as plain text"}])
+  def mda_score(self):
+    thread = self.client.beta.threads.create(messages = 
+    [{"role": "user", "content": "Return the entire Management Discussion and Analysis section as plain text"}])
     run = self.client.beta.threads.runs.create_and_poll(
     thread_id=thread.id,
     assistant_id=self.assistant.id,
-    instructions="Return the entire text of the most recent Management Discussion and Analysis section from the documents in the vector store and nothing else. The section may roll onto multiple pages, return the entire section as plain text"
+    instructions="Return the entire text of the most recent Management Discussion and Analysis section \
+                  from the documents in the vector store and nothing else. The section may roll onto multiple pages, \
+                  return the entire section as plain text"
     )
     if run.status == 'completed': 
       messages = self.client.beta.threads.messages.list(thread_id=thread.id)
       if messages.data:
-          # return value
           content = messages.data[0].content[0].text.value
       else:
         return None
@@ -257,57 +257,58 @@ class AIModel:
       new_sentiment = pipe(chunk)[0]
       mda_labels[new_sentiment["label"]] += new_sentiment["score"]
       i += 1
+                        #  positive                     average neutral (total - neg - pos)
     final_score = round((mda_labels["positive"]*100 + (i-mda_labels["negative"]-mda_labels["positive"])*50)/i)
     for k,v in mda_labels.items():
       mda_labels[k] = round(v/i, 2)
     return f"{final_score},{mda_labels['positive']},{mda_labels['neutral']},{mda_labels['negative']}"
     
-  def mda_score(self):
+#   def mda_score(self):
 
-    thread = self.client.beta.threads.create(messages = [{"role": "user", "content": "Return the entire Management Discussion and Analysis section as plain text"}])
-    run = self.client.beta.threads.runs.create_and_poll(
-    thread_id=thread.id,
-    assistant_id=self.assistant.id,
-    instructions="Return the entire text of the most recent Management Discussion and Analysis section from the documents in the vector store"
-    )
-    analyzer = SentimentIntensityAnalyzer()
-    # tokenizer = BertTokenizer.from_pretrained('yiyanghkust/finbert-tone')
-    # model = BertForSequenceClassification.from_pretrained('yiyanghkust/finbert-tone')
-    # model.eval()
+#     thread = self.client.beta.threads.create(messages = [{"role": "user", "content": "Return the entire Management Discussion and Analysis section as plain text"}])
+#     run = self.client.beta.threads.runs.create_and_poll(
+#     thread_id=thread.id,
+#     assistant_id=self.assistant.id,
+#     instructions="Return the entire text of the most recent Management Discussion and Analysis section from the documents in the vector store"
+#     )
+#     analyzer = SentimentIntensityAnalyzer()
+#     # tokenizer = BertTokenizer.from_pretrained('yiyanghkust/finbert-tone')
+#     # model = BertForSequenceClassification.from_pretrained('yiyanghkust/finbert-tone')
+#     # model.eval()
     
-    if run.status == 'completed': 
-      messages = self.client.beta.threads.messages.list(thread_id=thread.id)
+#     if run.status == 'completed': 
+#       messages = self.client.beta.threads.messages.list(thread_id=thread.id)
 
       
-      if messages.data:
-          # return value
-          content = messages.data[0].content[0].text.value
-          scores = analyzer.polarity_scores(content)
-          # parts = self.mda_chunks(content)
-          # for p in parts:
-          #   print(nlp(p))
-          # inputs = tokenizer(messages.data[0].content[0].text.value[:512], return_tensors='pt')
-          # print(inputs)
-          # tokens = tokenizer.encode(messages.data[0].content[0].text.value[:512], return_tensors='pt')
-          # print(tokens)
-          # result = model(tokens)
-          # print("tokens", result)
+#       if messages.data:
+#           # return value
+#           content = messages.data[0].content[0].text.value
+#           scores = analyzer.polarity_scores(content)
+#           # parts = self.mda_chunks(content)
+#           # for p in parts:
+#           #   print(nlp(p))
+#           # inputs = tokenizer(messages.data[0].content[0].text.value[:512], return_tensors='pt')
+#           # print(inputs)
+#           # tokens = tokenizer.encode(messages.data[0].content[0].text.value[:512], return_tensors='pt')
+#           # print(tokens)
+#           # result = model(tokens)
+#           # print("tokens", result)
 
-# Get the model's outputs
-          # with torch.no_grad():
-          #     outputs = model(**inputs)
+# # Get the model's outputs
+#           # with torch.no_grad():
+#           #     outputs = model(**inputs)
 
-          # The output contains logits, which we can use for sentiment classification
-          # logits = outputs.logits
+#           # The output contains logits, which we can use for sentiment classification
+#           # logits = outputs.logits
 
-          # # Convert logits to probabilities
-          # probabilities = torch.softmax(logits, dim=1).cpu().numpy()
-          # print("probs", probabilities)
-          # Get the sentiment scores for each class (positive, negative, neutral)
-          # sentiment_scores = probabilities[0]
-          print("SENTIMENT SCOREEEEEE", scores, ((scores["compound"]+1)*50), (scores["neu"]*0.5 + scores["pos"])*100)
-          return (scores["neu"]*0.5 + scores["pos"])*100
-    return "Error in prompt"
+#           # # Convert logits to probabilities
+#           # probabilities = torch.softmax(logits, dim=1).cpu().numpy()
+#           # print("probs", probabilities)
+#           # Get the sentiment scores for each class (positive, negative, neutral)
+#           # sentiment_scores = probabilities[0]
+#           print("SENTIMENT SCOREEEEEE", scores, ((scores["compound"]+1)*50), (scores["neu"]*0.5 + scores["pos"])*100)
+#           return (scores["neu"]*0.5 + scores["pos"])*100
+#     return "Error in prompt"
      
      
 # if __name__ == "__main__":
