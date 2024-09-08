@@ -206,7 +206,7 @@ class AIModel:
 
 
   def plots(self, instructions="", prompt=None, reattempted=False):
-
+    thread_key = prompt.replace(" ", "").lower()
     if thread_key not in self.threads_dict:
       thread = self.client.beta.threads.create(messages = [{"role": "user", "content": prompt}])
     else:

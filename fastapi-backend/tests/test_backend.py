@@ -9,6 +9,7 @@ from unittest.mock import patch, MagicMock
 from assistant_test import AIModel  
 import os
 import pytest
+import tempfile
 
 # class BackendTests(unittest.TestCase):
 #     @patch('assistant_test.AzureOpenAI')  
@@ -64,9 +65,24 @@ def set_env_vars(monkeypatch):
     monkeypatch.delenv('AZURE_OPENAI_API_KEY', raising=False)
     monkeypatch.delenv('AZURE_OPENAI_ENDPOINT', raising=False)
 
+@pytest.fixture
+def create_images():
+    plots_dir = os.path.join(os.path.dirname(__file__), '../plots')
+    if not os.path.exists(plots_dir):
+        os.makedirs(plots_dir)
+    file_name = 'dummy.png'
+    file_path = os.path.join(plots_dir, file_name)
+
+    # Create an empty file with the specified name
+    with open(file_path, 'w') as file:
+        file.write('')  # Optionally, you can write some content if needed
+
+    yield file_path
+    if os.path.exists(file_path):
+        os.remove(file_path)
+    
+
 def test_initialization_does_not_raise_404():
-    # Example test for AIModel initialization
-    from assistant_test import AIModel
     with patch('assistant_test.AzureOpenAI') as MockAzureOpenAI:
         mock_client = MagicMock()
         MockAzureOpenAI.return_value = mock_client
@@ -81,23 +97,28 @@ def test_initialization_does_not_raise_404():
         except Exception as e:
             pytest.fail(f'AIModel initialization raised an exception: {e}')
 
-def test_prompt():
-    # Ensure the application behaves correctly when environment variables are missing
-    response = client.post("/prompt/", json={"body": "Test Item"})
-    assert response.status_code == 200  # Adjust based on expected behavior
-
 def test_env_check_with_missing_vars(set_env_vars):
-    # Use monkeypatch to simulate missing environment variables
-    # monkeypatch.delenv('AZURE_OPENAI_API_KEY', raising=False)
-    # monkeypatch.delenv('AZURE_OPENAI_ENDPOINT', raising=False)
-
     # Check if ValueError is raised
     with pytest.raises(ValueError, match="AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT must be set in the environment variables"):
         check_env()
-
-
-
-
+def test_prompt():
+    response = client.post("/prompt/", json={"body": "Test Item"})
+    assert response.status_code == 200
+def test_plotprompt():
+    response = client.post("/plotprompt/", json={"body": "Test Item"})
+    assert response.status_code == 200
+def test_mda():
+    response = client.post("/mdascore/", json={"body": "Test Item"})
+    assert response.status_code == 200
+def test_download():
+    response = client.get("/download-ppt/")
+    assert response.status_code == 200
+def test_list_images(create_images):
+    response = client.get("/list-images?context=dummy")
+    assert response.status_code == 200
+    files = response.json()
+    assert isinstance(files, list)
+    assert len(files) == 1
 
 
 # if __name__ == "__main__":

@@ -98,7 +98,9 @@ test("allows for file upload", () => {
     </CustomRender>
   );
   const uploadInput = screen.getByLabelText(/Browse files/i);
+
   userEvent.upload(uploadInput, file);
+
   expect(uploadInput.files).toHaveLength(1);
 });
 
@@ -137,7 +139,7 @@ test("allows for multiple files to be uploaded", () => {
   expect(uploaded3).toBeInTheDocument();
 });
 
-test("doesn't allows for the duplicate file upload", () => {
+test("doesn't allows for duplicate file uploads", () => {
   const currDate = Date.now();
   const file1 = [
     new File(["testfile1"], "test.pdf", {
@@ -185,12 +187,11 @@ test("displays AI financial advisor after upload", async () => {
   );
   const uploadInput = screen.getByLabelText(/Browse files/i);
   userEvent.upload(uploadInput, file);
-  act(() => {
-    userEvent.click(screen.getByText(/Business Overview/i));
-  });
+
+  userEvent.click(screen.getByText(/Business Overview/i));
 
   const button = screen.getByText(/Submit/i);
-  act(() => {
+  await act(async () => {
     userEvent.click(button);
   });
 
@@ -209,123 +210,23 @@ test("AI financial advisor is correctly opened", async () => {
   );
   const uploadInput = screen.getByLabelText(/Browse files/i);
   userEvent.upload(uploadInput, file);
-  act(() => {
-    userEvent.click(screen.getByText(/Business Overview/i));
-  });
+
+  userEvent.click(screen.getByText(/Business Overview/i));
 
   const button = screen.getByText(/Submit/i);
-  act(() => {
+  await act(async () => {
     userEvent.click(button);
   });
 
   const aiFinancialAdvisorOpen = screen.queryByLabelText(/chat-bot-toggle/i);
   expect(aiFinancialAdvisorOpen).toBeInTheDocument();
-  act(() => {
-    userEvent.click(aiFinancialAdvisorOpen);
-  });
+
+  userEvent.click(aiFinancialAdvisorOpen);
 
   const aiFinancialAdvisorMessage = screen.getByText(
     /Send a prompt here and the documents uploaded will be queried for an answer/i
   );
   expect(aiFinancialAdvisorMessage).toBeInTheDocument();
-});
-
-test("message system of financial advisor", async () => {
-  const file = [
-    new File(["testfile1"], "test.pdf", { type: "application/pdf" }),
-  ];
-  render(
-    <CustomRender>
-      <App />
-    </CustomRender>
-  );
-  const uploadInput = screen.getByLabelText(/Browse files/i);
-  userEvent.upload(uploadInput, file);
-  act(() => {
-    userEvent.click(screen.getByText(/Business Overview/i));
-  });
-
-  const button = screen.getByText(/Submit/i);
-  act(() => {
-    userEvent.click(button);
-  });
-
-  const aiFinancialAdvisorOpen = screen.queryByLabelText(/chat-bot-toggle/i);
-  expect(aiFinancialAdvisorOpen).toBeInTheDocument();
-  act(() => {
-    userEvent.click(aiFinancialAdvisorOpen);
-  });
-
-  const chatPrompt = "test-chat-prompt";
-  const inputField = screen.getByPlaceholderText(/Enter document prompt.../i);
-  expect(screen.queryByText(chatPrompt)).not.toBeInTheDocument();
-  act(() => {
-    userEvent.type(inputField, chatPrompt);
-  });
-  const sendPrompt = screen.getByLabelText("chat-bot-send");
-  act(() => {
-    userEvent.click(sendPrompt);
-  });
-  await waitFor(() => {
-    expect(screen.getAllByText(chatPrompt)).toHaveLength(2);
-  });
-  await waitFor(() => {
-    expect(screen.getByText("mock chat response")).toBeInTheDocument();
-  });
-  await waitFor(() => {
-    expect(screen.getAllByText(chatPrompt)).toHaveLength(1);
-  });
-});
-
-test("displays the analysis", async () => {
-  const file = [
-    new File(["testfile1"], "test.pdf", { type: "application/pdf" }),
-  ];
-  render(
-    <CustomRender>
-      <App />
-    </CustomRender>
-  );
-  const uploadInput = screen.getByLabelText(/Browse files/i);
-  userEvent.upload(uploadInput, file);
-  act(() => {
-    userEvent.click(screen.getByText(/Business Overview/i));
-  });
-
-  const button = screen.getByText(/Submit/i);
-  act(() => {
-    userEvent.click(button);
-  });
-  expect(screen.getByText("Results")).toBeInTheDocument();
-});
-
-test("displays sentiment score", async () => {
-  const file = [
-    new File(["testfile1"], "test.pdf", { type: "application/pdf" }),
-  ];
-  render(
-    <CustomRender>
-      <App />
-    </CustomRender>
-  );
-  const uploadInput = screen.getByLabelText(/Browse files/i);
-  userEvent.upload(uploadInput, file);
-  act(() => {
-    userEvent.click(screen.getByText(/Business Overview/i));
-    userEvent.click(
-      screen.getByLabelText(
-        /Include sentiment analysis on Managament Discussion & Analysis section?/i
-      )
-    );
-  });
-
-  const button = screen.getByText(/Submit/i);
-  act(() => {
-    userEvent.click(button);
-  });
-  await waitFor(() => {
-    expect(screen.getByText(/Sentiment score:/i)).toBeInTheDocument();
-  });
 });
 
 test("displays download button after completion", async () => {
@@ -339,11 +240,11 @@ test("displays download button after completion", async () => {
   );
   const uploadInput = screen.getByLabelText(/Browse files/i);
   userEvent.upload(uploadInput, file);
-  act(() => {
-    userEvent.click(screen.getByText(/Business Overview/i));
-  });
+  userEvent.click(screen.getByText(/Business Overview/i));
+  expect(screen.queryByLabelText(/download-button/i)).not.toBeInTheDocument();
+
   const button = screen.getByText(/Submit/i);
-  act(() => {
+  await act(async () => {
     userEvent.click(button);
   });
   await waitFor(() => {
@@ -362,12 +263,11 @@ test("clicking download downloads powerpoint", async () => {
   );
   const uploadInput = screen.getByLabelText(/Browse files/i);
   userEvent.upload(uploadInput, file);
-  act(() => {
-    userEvent.click(screen.getByText(/Business Overview/i));
-  });
+
+  userEvent.click(screen.getByText(/Business Overview/i));
 
   const button = screen.getByText(/Submit/i);
-  act(() => {
+  await act(async () => {
     userEvent.click(button);
   });
   expect(screen.getByText("Results")).toBeInTheDocument();
@@ -379,12 +279,117 @@ test("clicking download downloads powerpoint", async () => {
   expect(global.URL.createObjectURL).toHaveBeenCalled();
 });
 
-// // // test("doesn't render AI financial advisor before documents are uploaded", () => {
-// // //   render(
-// // //     <CustomRender>
-// // //       <App />
-// // //     </CustomRender>
-// // //   );
-// // //   const aiFinancialAdvisor = screen.queryByText(/AI Financial Advisor/i);
-// // //   expect(aiFinancialAdvisor).toBeInTheDocument();
-// // // });
+//
+//
+//
+//
+// INTEGRATION
+
+test("displays the analysis", async () => {
+  const file = [
+    new File(["testfile1"], "test.pdf", { type: "application/pdf" }),
+  ];
+
+  render(
+    <CustomRender>
+      <App />
+    </CustomRender>
+  );
+
+  const uploadInput = screen.getByLabelText(/Browse files/i);
+
+  userEvent.upload(uploadInput, file);
+
+  userEvent.click(screen.getByText(/Business Overview/i));
+  userEvent.click(screen.getByText(/Revenue/i));
+
+  const button = screen.getByText(/Submit/i);
+  await act(async () => {
+    userEvent.click(button);
+  });
+  expect(screen.getByText("Results")).toBeInTheDocument();
+  expect(screen.getByText("Business Overview")).toBeInTheDocument();
+  expect(screen.getByText("Revenue")).toBeInTheDocument();
+});
+
+test("displays sentiment score", async () => {
+  const file = [
+    new File(["testfile1"], "test.pdf", { type: "application/pdf" }),
+  ];
+  render(
+    <CustomRender>
+      <App />
+    </CustomRender>
+  );
+  const uploadInput = screen.getByLabelText(/Browse files/i);
+  userEvent.upload(uploadInput, file);
+  userEvent.click(screen.getByText(/Business Overview/i));
+  userEvent.click(
+    screen.getByLabelText(
+      /Include sentiment analysis on Managament Discussion & Analysis section?/i
+    )
+  );
+
+  const button = screen.getByText(/Submit/i);
+  await act(async () => {
+    userEvent.click(button);
+  });
+  await waitFor(() => {
+    expect(screen.getByText(/Sentiment score:/i)).toBeInTheDocument();
+  });
+});
+
+test("message system of financial advisor", async () => {
+  const file = [
+    new File(["testfile1"], "test.pdf", { type: "application/pdf" }),
+  ];
+  render(
+    <CustomRender>
+      <App />
+    </CustomRender>
+  );
+  const uploadInput = screen.getByLabelText(/Browse files/i);
+  userEvent.upload(uploadInput, file);
+
+  userEvent.click(screen.getByText(/Business Overview/i));
+
+  const button = screen.getByText(/Submit/i);
+  await act(async () => {
+    userEvent.click(button);
+  });
+
+  const aiFinancialAdvisorOpen = screen.queryByLabelText(/chat-bot-toggle/i);
+  expect(aiFinancialAdvisorOpen).toBeInTheDocument();
+
+  userEvent.click(aiFinancialAdvisorOpen);
+
+  const chatPrompt = "test-chat-prompt";
+  const inputField = screen.getByPlaceholderText(/Enter document prompt.../i);
+  expect(screen.queryByText(chatPrompt)).not.toBeInTheDocument();
+
+  userEvent.type(inputField, chatPrompt);
+
+  const sendPrompt = screen.getByLabelText("chat-bot-send");
+
+  userEvent.click(sendPrompt);
+
+  await waitFor(() => {
+    expect(screen.getAllByText(chatPrompt)).toHaveLength(2);
+  });
+  await waitFor(() => {
+    expect(screen.getByText("mock chat response")).toBeInTheDocument();
+  });
+  await waitFor(() => {
+    expect(screen.getAllByText(chatPrompt)).toHaveLength(1);
+  });
+});
+
+// // // // test("doesn't render AI financial advisor before documents are uploaded", () => {
+// // // //   render(
+// // // //     <CustomRender>
+// // // //       <App />
+// // // //     </CustomRender>
+// // // //   );
+// // // //   const aiFinancialAdvisor = screen.queryByText(/AI Financial Advisor/i);
+// // // //   expect(aiFinancialAdvisor).toBeInTheDocument();
+// // // // });

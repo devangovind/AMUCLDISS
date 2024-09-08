@@ -106,12 +106,12 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
   return (
     <>
       {metrics.map((metric) => (
-        <>
+        <Stack key={metric.key}>
+          <Typography variant="subtitle" fontWeight="bold">
+            {metric.label}
+          </Typography>
           {metric.key === "overview" ? (
             <>
-              <Typography variant="subtitle" fontWeight="bold">
-                {metric.label}
-              </Typography>
               <Typography
                 sx={{ flexGrow: "auto", whiteSpace: "pre-wrap" }}
                 dangerouslySetInnerHTML={{ __html: responseTexts[metric.key] }}
@@ -121,9 +121,6 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
             </>
           ) : (
             <>
-              <Typography variant="subtitle" fontWeight="bold">
-                {metric.label}
-              </Typography>
               <Stack flexDirection="row">
                 <Box maxWidth="55%">
                   <Typography
@@ -144,7 +141,7 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
               </Stack>
             </>
           )}
-        </>
+        </Stack>
       ))}
       {includeSentiment && <Mdascore score={mdaScore} />}
     </>

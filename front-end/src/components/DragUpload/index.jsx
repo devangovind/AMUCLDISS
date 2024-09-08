@@ -96,9 +96,9 @@ const DragUpload = ({
 
   const addMetric = () => {
     const newMetric = additionalMetric.trim().toLowerCase();
-    console.log(chips, additionalMetric, newMetric);
+
     const metricAsChip = { key: newMetric, label: additionalMetric };
-    console.log(chips.includes(metricAsChip));
+
     const chipExists = chips.some((item) => item.key === newMetric);
     if (chipExists) {
       const chipSelected = selectedChips.some((item) => item.key === newMetric);
@@ -301,13 +301,13 @@ const ChipsWithCheckboxGroup = ({ chips, selectedChips, setSelectedChips }) => {
   // const chipsOrder = chips.map((item) => item.key);
   const handleToggleChip = (chip) => {
     const chipSelected = selectedChips.some((item) => item.key === chip.key);
-    console.log("pre seelcted: ", selectedChips);
+
     setSelectedChips((prevSelectedChips) =>
       chipSelected
         ? prevSelectedChips.filter((item) => item.key !== chip.key)
         : [...prevSelectedChips, chip]
     );
-    console.log(chipSelected, "clicked", chip, "seelcted: ", selectedChips);
+
     setSelectedChips((prevSelectedChips) =>
       prevSelectedChips.sort((a, b) => {
         let indexA = chips.indexOf(a);
@@ -335,19 +335,20 @@ const ChipsWithCheckboxGroup = ({ chips, selectedChips, setSelectedChips }) => {
         gap={2}
       >
         {chips.map((item) => (
-          <CustomChips
-            key={item.key}
-            label={item.label}
-            isSelected={selectedChips.some((prev) => prev.key === item.key)}
-            onToggle={() => handleToggleChip(item)}
-          />
+          <div key={item.key}>
+            <CustomChips
+              label={item.label}
+              isSelected={selectedChips.some((prev) => prev.key === item.key)}
+              onToggle={() => handleToggleChip(item)}
+            />
+          </div>
         ))}
       </Stack>
     </Box>
   );
 };
 
-const CustomChips = ({ key, label, isSelected, onToggle }) => {
+const CustomChips = ({ label, isSelected, onToggle }) => {
   return (
     <Chip
       label={
@@ -363,6 +364,7 @@ const CustomChips = ({ key, label, isSelected, onToggle }) => {
         />
       }
       variant={isSelected ? "default" : "outlined"}
+
       // onClick={onToggle}
     />
   );

@@ -43,7 +43,6 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setResponse("Uploading files..."); // Clear previous response
-    console.log(files);
     setSubmitted(true);
     if (files.length > 0) {
       const formData = new FormData();
