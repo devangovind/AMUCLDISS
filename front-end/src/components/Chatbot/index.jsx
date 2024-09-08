@@ -54,13 +54,12 @@ const Chatbot = () => {
     const newResponse = await fetch("http://localhost:8000/chatprompt/", {
       method: "POST",
       headers: {
-        "Content-Type": "text/plain", // Explicitly declare the content type
+        "Content-Type": "text/plain",
       },
       body: currMessage,
     });
 
     const text = await newResponse.text();
-    // await genresponse(newResponse);
     const aiResponse = {
       sender: "ai",
       message: text,
@@ -148,7 +147,6 @@ const Chatbot = () => {
                 display: "flex",
                 flexDirection: "column",
                 overflowY: "scroll",
-                // marginBottom: "20px",
               }}
             >
               {messages.map((messageObj, index) => (
@@ -168,7 +166,6 @@ const Chatbot = () => {
               paddingY={0.5}
               alignItems="center"
               borderRadius="10px"
-              // backgroundColor={theme.palette.grey[700]}
               backgroundColor={theme.palette.am.dark}
             >
               <Input
@@ -184,14 +181,6 @@ const Chatbot = () => {
                 onChange={_handleInputChange}
                 disabled={inputDisabled}
               />
-              {/* <Button
-                onClick={() => sendMessage()}
-                disabled={sendDisabled}
-                sx={{ marginRight: "10px" }}
-                aria-label="chat-bot-send"
-              >
-                Send
-              </Button> */}
               <IconButton
                 onClick={() => sendMessage()}
                 disabled={sendDisabled}

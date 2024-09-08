@@ -3,8 +3,7 @@ from openai import AzureOpenAI
 from dotenv import find_dotenv, load_dotenv
 import pandas as pd
 import re
-from openai import AssistantEventHandler
-from typing_extensions import override
+
 from io import BytesIO
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -111,18 +110,6 @@ class AIModel:
         return self.analyse(metric=metric, reattempted=True)
     return "Error in analysis"
   
-# for message in reversed(messages.data):
-#             for message_content in message.content:
-#               if hasattr(message_content, "image_file"):
-#                 file_id = message_content.image_file.file_id
-#                 resp = self.client.files.with_raw_response.content(file_id)
-#                 if resp.status_code == 200:
-#                   image_data = BytesIO(resp.content)
-#                   img = Image.open(image_data)
-#                   img.show()
-#               if hasattr(message_content, "text"):
-#                  value = message_content.text.value
-
   def plots(self, instructions="", metric=None, reattempted=False, customPrompt=""):
     thread_key = metric.replace(" ", "")
     if customPrompt != "":
@@ -180,31 +167,6 @@ class AIModel:
       if messages.data:
           return messages.data[0].content[0].text.value.replace("\n\n", "\n")
     return "Error in prompt"
-  
-  # def mda_score(self):
-  #   # thread = self.client.beta.threads.create(messages = [{"role": "user", "content": "Analyse the documents as a whole and specifically the managements discussion and analysis section from the latest information in the vector store and perform sentiment analysis on it. The response should be a two numbers separated by a comma. The first number should be a rating of the companies performance and future outlook out of 100. The second number should be a probability/trust value as to how accurate the first number is based on the report."}])
-  #   thread = self.client.beta.threads.create(messages = [{"role": "user", "content": "Analyse the documents specifically the most recent information and perform sentiment analysis on it. From the document(s) use the most recent Management Discussion and Analysis (MD&A) section to perform sentiment analysis. Give the company a rating out of 100 based on its future outlook. Return only the number on its own!"}])
-  #   run = self.client.beta.threads.runs.create_and_poll(
-  #   thread_id=thread.id,
-  #   assistant_id=self.assistant.id,
-  #   instructions="Return the sentiment score which should be a rating of the companies performance and future outlook out of 100 based on sentiment analysis from the Management Discussion and Analysis (MD&A) section. A higher score represents a better company outlook. Return only the sentiment score. Do not return anything else other than the score on its own! If the MD&A section is not present in the document or sentiment analysis cannot be performed, return an error"
-  #   )
-  #   if run.status == 'completed': 
-  #     messages = self.client.beta.threads.messages.list(thread_id=thread.id)
-  #     print(messages)
-      
-  #     if messages.data:
-  #         # return value
-  #         return messages.data[0].content[0].text.value.replace("\n\n", "\n")
-  #   return "Error in prompt"
-  def mda_chunks(self, full_section):
-    parts = []
-    for i in range(0,len(full_section), 511):
-      if i+100 > len(full_section):
-        parts.append(full_section[i:])
-      else:
-        parts.append(full_section[i:i+100])
-    return parts
 
   def yield_mda_chunks(self, full_section):
     for i in range(0,len(full_section), 511):

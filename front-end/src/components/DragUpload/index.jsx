@@ -1,8 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { chipLabels } from "./metrics";
-// import { AiOutlineCheckCircle, AiOutlineCloudUpload } from "react-icons/ai";
-// import { MdClear } from "react-icons/md";
-// import "./DragUpload.css";
 import {
   Box,
   Button,
@@ -77,11 +74,6 @@ const DragUpload = ({
     setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
     document.getElementById("file-input").value = "";
   };
-
-  // useEffect(() => {
-  //   onFilesSelected && onFilesSelected(files);
-  // }, [files, onFilesSelected]);
-
   useEffect(() => {
     if (additionalMetric.trim() === "") {
       setsendDisabled(true);
@@ -234,7 +226,6 @@ const DragUpload = ({
                   }}
                   value={additionalMetric}
                   onChange={_handleInputChange}
-                  // disabled={inputDisabled}
                 />
 
                 <IconButton
@@ -276,7 +267,6 @@ const DragUpload = ({
         </Box>
       )}
     </DragDropBox>
-    // </section>
   );
 };
 
@@ -295,7 +285,6 @@ const DragDropBox = styled(Card)(({ theme }) => ({
 }));
 
 const ChipsWithCheckboxGroup = ({ chips, selectedChips, setSelectedChips }) => {
-  // const chipsOrder = chips.map((item) => item.key);
   const handleToggleChip = (chip) => {
     const chipSelected = selectedChips.some((item) => item.key === chip.key);
 

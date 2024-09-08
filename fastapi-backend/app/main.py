@@ -45,16 +45,9 @@ app.add_middleware(
 )
 app.mount("/images", StaticFiles(directory=PLOT_DIR), name="images")
 
-def streamed_res(content):
-    chunks = 3000
-    for l in range(len(content)):
-        time.sleep(0.005)
-        yield content[l]
 
 def format_to_html(text):
-    # Replace headers denoted by '###'
     text = re.sub(r'### (.+)', r'<h4>\1</h4>', text)
-    # Replace bold text denoted by '**'
     text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
     text = re.sub(r'```.*?```', '', text, flags=re.DOTALL)
     text = re.sub(r"【.*?】", "", text)
@@ -62,8 +55,6 @@ def format_to_html(text):
 
 def format_to_chat(text):
     text = re.sub(r'### (.+)', r'\1', text)
-
-    # Replace bold text denoted by '**'
     text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
     text = re.sub(r'```.*?```', '', text, flags=re.DOTALL)
     text = re.sub(r"【.*?】", "", text)
@@ -86,34 +77,6 @@ def gen_plots(code):
     except Exception as e:
         print("genplots exception", code, e)
         return e
-
-
-def gen_plots3(years, data):
-    for metric, value in data.items():
-        if isinstance(value[0], dict):
-            # do something
-            sector_dict = defaultdict(list)
-            for sector in value:
-                for k,v in sector.items():
-                    sector_dict[k].append(v)
-            plt.figure(figsize=(10,6))
-            plt.title(metric)
-            for k,v in sector_dict.items():
-                plt.plot(years, v, label=k, marker="o")
-            plt.xticks(years)
-            plt.ylabel(metric)
-            plt.legend()
-            figure_name = metric.replace(" ", "_")
-            plt.savefig(f'./plots/{figure_name}.png')
-        else:
-            plt.figure(figsize=(10,6))
-            plt.title(metric)
-            plt.plot(years, value, marker="o")
-            plt.xlabel("Years")
-            plt.xticks(years)
-            plt.ylabel(metric)
-            figure_name = metric.replace(" ", "_")
-            plt.savefig(f'./plots/{figure_name}.png')
     
 
 class main_AIModel:
@@ -197,7 +160,6 @@ async def prompt(request: Request):
 async def plotprompt(request: Request):
     prompt = await request.body()
     prompt_text = prompt.decode('utf-8')
-    print("plots", prompt_text)
     plot_prompt_text = prompt.decode('utf-8').replace(" ", "").lower()
     model = main_AIModel()
     if plot_prompt_text == "businessoverview":
@@ -245,7 +207,6 @@ def download_ppt():
 
 @app.get("/list-images")
 def list_images(image_context = Query(None, alias="metric")):
-    print("plots", PLOT_DIR)
     if not image_context:
         return []
     with os.scandir(PLOT_DIR) as entries:
@@ -255,9 +216,9 @@ def list_images(image_context = Query(None, alias="metric")):
 
 
 if __name__ == '__main__':
-    # with os.scandir(PLOT_DIR) as existing_plots:
-    #     for plot in existing_plots:
-    #         os.remove(plot.path)
+    with os.scandir(PLOT_DIR) as existing_plots:
+        for plot in existing_plots:
+            os.remove(plot.path)
     with os.scandir("./saved_files") as existing_files:
         for f in existing_files:
             os.remove(f.path)
