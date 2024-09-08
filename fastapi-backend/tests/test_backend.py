@@ -115,12 +115,12 @@ def test_env_check_with_missing_vars(set_env_vars):
 def test_prompt():
     response = client.post("/prompt/", json={"body": "Test Item"})
     assert response.status_code == 200
-# def test_plotprompt():
-#     response = client.post("/plotprompt/", json={"body": "Test Item"})
-#     assert response.status_code == 200
-# def test_mda():
-#     response = client.get("/mdascore/")
-#     assert response.status_code == 200
+def test_plotprompt():
+    response = client.post("/plotprompt/", json={"body": "Test Item"})
+    assert response.status_code == 200
+def test_mda():
+    response = client.get("/mdascore/")
+    assert response.status_code == 200
 def test_download():
     response = client.get("/download-ppt/")
     assert response.status_code == 200
@@ -135,6 +135,7 @@ def test_list_images(create_images):
     files = response.json()
     assert isinstance(files, list)
     assert len(files) == 1
+
 
 
 # if __name__ == "__main__":
