@@ -8,13 +8,13 @@ from dotenv import load_dotenv
 import logging
 from typing import List
 import tiktoken
-from assistant_test import AIModel
+from assistant import AIModel
 import matplotlib.pyplot as plt
 import time
 import re
 from collections import defaultdict
 import pandas as pd
-from presentation_create import PPT
+from presentation import PPT
 import datetime
 
 
@@ -22,17 +22,23 @@ load_dotenv()
 
 app = FastAPI()
 
-api_key = os.getenv('AZURE_OPENAI_API_KEY')
-azure_endpoint = os.getenv('AZURE_OPENAI_ENDPOINT')
 api_version = "2023-07-01-preview"
-PLOT_DIR = "./plots"
 
-if not api_key or not azure_endpoint:
-    raise ValueError("AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT must be set in the environment variables")
-# Add CORS middleware
+PLOT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "plots")
+
+def check_env():
+    api_key = os.getenv('AZURE_OPENAI_API_KEY')
+    azure_endpoint = os.getenv('AZURE_OPENAI_ENDPOINT')
+    if not api_key or not azure_endpoint:
+        raise ValueError("AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT must be set in the environment variables")
+
+@app.on_event("startup")
+async def on_startup():
+    check_env()
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # React frontend origin
+    allow_origins=["http://localhost:3000"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -239,6 +245,7 @@ def download_ppt():
 
 @app.get("/list-images")
 def list_images(image_context = Query(None, alias="metric")):
+    print("plots", PLOT_DIR)
     if not image_context:
         return []
     with os.scandir(PLOT_DIR) as entries:
@@ -248,9 +255,9 @@ def list_images(image_context = Query(None, alias="metric")):
 
 
 if __name__ == '__main__':
-    with os.scandir(PLOT_DIR) as existing_plots:
-        for plot in existing_plots:
-            os.remove(plot.path)
+    # with os.scandir(PLOT_DIR) as existing_plots:
+    #     for plot in existing_plots:
+    #         os.remove(plot.path)
     with os.scandir("./saved_files") as existing_files:
         for f in existing_files:
             os.remove(f.path)

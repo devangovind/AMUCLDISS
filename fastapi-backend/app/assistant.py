@@ -11,38 +11,18 @@ from PIL import Image
 import time
 import os
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
-# from transformers import BertTokenizer, BertForSequenceClassification
 import nltk
 nltk.download('vader_lexicon')
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from transformers import pipeline
-# from transformers import BertTokenizer, BertForSequenceClassification
-# from transformers import pipeline
-
-# # Load model directly
-# from transformers import AutoTokenizer, AutoModelForSequenceClassification
-# # Use a pipeline as a high-level helper
-# from transformers import pipeline
-
-# nlp = pipeline("text-classification", model="ProsusAI/finbert")
-
-
-# import multiprocessing
-
-# # Set start method for multiprocessing to 'spawn' to avoid resource tracker issues
-# multiprocessing.set_start_method('spawn', force=True)
-# import torch
-
-
-
-
-
 
 
 dotenv_path = find_dotenv()
 load_dotenv(dotenv_path)
-AI_API_KEY = os.getenv("AI_API_KEY")
-AI_ENDPOINT = os.getenv("AI_ENDPOINT")
+AI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
+AI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
+if not AI_API_KEY or not AI_ENDPOINT:
+    raise ValueError("AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT must be set in the environment variables")
 
 api_version = "2024-05-01-preview"
 model = "gpt-4o"
@@ -263,62 +243,3 @@ class AIModel:
       mda_labels[k] = round(v/i, 2)
     return f"{final_score},{mda_labels['positive']},{mda_labels['neutral']},{mda_labels['negative']}"
     
-#   def mda_score(self):
-
-#     thread = self.client.beta.threads.create(messages = [{"role": "user", "content": "Return the entire Management Discussion and Analysis section as plain text"}])
-#     run = self.client.beta.threads.runs.create_and_poll(
-#     thread_id=thread.id,
-#     assistant_id=self.assistant.id,
-#     instructions="Return the entire text of the most recent Management Discussion and Analysis section from the documents in the vector store"
-#     )
-#     analyzer = SentimentIntensityAnalyzer()
-#     # tokenizer = BertTokenizer.from_pretrained('yiyanghkust/finbert-tone')
-#     # model = BertForSequenceClassification.from_pretrained('yiyanghkust/finbert-tone')
-#     # model.eval()
-    
-#     if run.status == 'completed': 
-#       messages = self.client.beta.threads.messages.list(thread_id=thread.id)
-
-      
-#       if messages.data:
-#           # return value
-#           content = messages.data[0].content[0].text.value
-#           scores = analyzer.polarity_scores(content)
-#           # parts = self.mda_chunks(content)
-#           # for p in parts:
-#           #   print(nlp(p))
-#           # inputs = tokenizer(messages.data[0].content[0].text.value[:512], return_tensors='pt')
-#           # print(inputs)
-#           # tokens = tokenizer.encode(messages.data[0].content[0].text.value[:512], return_tensors='pt')
-#           # print(tokens)
-#           # result = model(tokens)
-#           # print("tokens", result)
-
-# # Get the model's outputs
-#           # with torch.no_grad():
-#           #     outputs = model(**inputs)
-
-#           # The output contains logits, which we can use for sentiment classification
-#           # logits = outputs.logits
-
-#           # # Convert logits to probabilities
-#           # probabilities = torch.softmax(logits, dim=1).cpu().numpy()
-#           # print("probs", probabilities)
-#           # Get the sentiment scores for each class (positive, negative, neutral)
-#           # sentiment_scores = probabilities[0]
-#           print("SENTIMENT SCOREEEEEE", scores, ((scores["compound"]+1)*50), (scores["neu"]*0.5 + scores["pos"])*100)
-#           return (scores["neu"]*0.5 + scores["pos"])*100
-#     return "Error in prompt"
-     
-     
-# if __name__ == "__main__":
-#    model = AIModel()
-#   #  with open("saved_files/Amazon-2022-Annual-Report.pdf") as f:
-#   #     print(f)
-#    file_path = ["Ash_Random/2/fastapi-backend/saved_files/Amazon-2022-Annual-Report.pdf"]
-#    file_path = ["Ash_Random/2/fastapi-backend/saved_files/goog023-alphabet-2023-annual-report-web-1.pdf"]
-#    model.add_vector_store(file_path)
-#    time.sleep(5)
-
-
-#    print(model.analyse2(prompt="What is the name of the company presented in the files uplaoded (and wh7at are the files named) and explain why you know this is correct. Give the source"))

@@ -16,16 +16,7 @@ beforeEach(() => {
     } else if (url.endsWith("/prompt/")) {
       return Promise.resolve({
         ok: true,
-        body: {
-          getReader: () => ({
-            read: () =>
-              Promise.resolve({
-                done: true,
-                value: new TextEncoder().encode("Mocked overview response"),
-              }),
-            releaseLock: () => {},
-          }),
-        },
+        text: () => "Mocked response",
       });
     } else if (url.endsWith("/plotprompt/")) {
       return Promise.resolve({ ok: true });
@@ -37,7 +28,7 @@ beforeEach(() => {
     } else if (url.endsWith("/mdascore/")) {
       return Promise.resolve({
         ok: true,
-        text: () => "50",
+        text: () => "50,0.5,0.5,0.5",
       });
     } else if (url.endsWith("/chatprompt/")) {
       return Promise.resolve({
@@ -62,10 +53,10 @@ beforeEach(() => {
   global.URL.createObjectURL = jest.fn(() => "mocked-url");
   global.URL.revokeObjectURL = jest.fn();
 });
-
 afterEach(() => {
   jest.resetAllMocks();
 });
+
 const CustomRender = ({ children }) => {
   return (
     <ThemeSettings
@@ -78,7 +69,7 @@ const CustomRender = ({ children }) => {
   );
 };
 
-test("renders drap and drop box", () => {
+test("Upload box is displayed on App render", () => {
   render(
     <CustomRender>
       <App />
@@ -88,7 +79,7 @@ test("renders drap and drop box", () => {
   expect(Drag).toBeInTheDocument();
 });
 
-test("allows for file upload", () => {
+test("Upload box allows for file upload", () => {
   const file = [
     new File(["testfile1"], "test.pdf", { type: "application/pdf" }),
   ];
@@ -335,7 +326,10 @@ test("displays sentiment score", async () => {
     userEvent.click(button);
   });
   await waitFor(() => {
-    expect(screen.getByText(/Sentiment score:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Overall score:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Positive:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Neutral:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Negative:/i)).toBeInTheDocument();
   });
 });
 

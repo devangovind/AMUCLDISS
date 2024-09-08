@@ -90,14 +90,13 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
     }
   }, [includeSentiment]);
   useEffect(() => {
-    if (
-      analysisComplete &&
-      mdaScore !== "Error generating score" &&
-      mdaScore !== null
-    ) {
+    if (analysisComplete && mdaScore !== null) {
       setSubmitted(true);
     }
-  }, [analysisComplete, mdaScore, setSubmitted]);
+    if (analysisComplete && includeSentiment === false) {
+      setSubmitted(true);
+    }
+  }, [analysisComplete, mdaScore, setSubmitted, includeSentiment]);
   return (
     <>
       {metrics.map((metric) => (

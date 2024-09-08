@@ -100,14 +100,11 @@ const DragUpload = ({
     const chipExists = chips.some((item) => item.key === newMetric);
     if (chipExists) {
       const chipSelected = selectedChips.some((item) => item.key === newMetric);
-      if (chipSelected) {
+      if (!chipSelected) {
         setSelectedChips((prev) => [...prev, metricAsChip]);
       }
     } else {
-      setChips((prev) => [
-        ...prev,
-        { key: newMetric, label: additionalMetric },
-      ]);
+      setChips((prev) => [...prev, metricAsChip]);
       setSelectedChips((prev) => [...prev, metricAsChip]);
     }
     setAdditionalMetric("");
