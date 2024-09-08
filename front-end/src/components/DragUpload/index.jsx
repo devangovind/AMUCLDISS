@@ -95,10 +95,8 @@ const DragUpload = ({
   };
 
   const addMetric = () => {
-    const newMetric = additionalMetric.trim().toLowerCase();
-
+    const newMetric = additionalMetric.replace(/\s+/g, "").toLowerCase();
     const metricAsChip = { key: newMetric, label: additionalMetric };
-
     const chipExists = chips.some((item) => item.key === newMetric);
     if (chipExists) {
       const chipSelected = selectedChips.some((item) => item.key === newMetric);
@@ -138,7 +136,8 @@ const DragUpload = ({
           Drag and drop your files here
         </Typography>
         <Typography variant="body1" sx={{ padding: 2 }}>
-          Limit 15MB per file. Supported files: .PDF, .DOCX, .PPTX, .TXT, .XLSX
+          Limit 15MB per file. Supported files: .PDF, .DOCX, .PPTX, .TXT, .XLSX,
+          .CSV
         </Typography>
 
         <input
@@ -146,7 +145,7 @@ const DragUpload = ({
           hidden
           id="file-input"
           onChange={handleFileChange}
-          accept=".pdf,.docx,.pptx,.txt,.xlsx"
+          accept=".pdf,.docx,.pptx,.txt,.xlsx,.csv"
           multiple
         />
         <label htmlFor="file-input">Browse files</label>
@@ -295,6 +294,7 @@ const DragDropBox = styled(Card)(({ theme }) => ({
   flexGrow: "auto",
   borderStyle: "dashed",
   borderColor: theme.palette.am.main,
+  borderWidth: 2,
 }));
 
 const ChipsWithCheckboxGroup = ({ chips, selectedChips, setSelectedChips }) => {

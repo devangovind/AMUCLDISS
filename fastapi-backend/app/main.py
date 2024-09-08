@@ -14,7 +14,7 @@ import time
 import re
 from collections import defaultdict
 import pandas as pd
-from presentation_create import CreatePPT
+from presentation_create import PPT
 import datetime
 
 
@@ -22,20 +22,13 @@ load_dotenv()
 
 app = FastAPI()
 
-# Ensure you set your OpenAI API key and endpoint in the environment variables
-
+api_key = os.getenv('AZURE_OPENAI_API_KEY')
+azure_endpoint = os.getenv('AZURE_OPENAI_ENDPOINT')
 api_version = "2023-07-01-preview"
 PLOT_DIR = "./plots"
 
-def check_env():
-    api_key = os.getenv('AZURE_OPENAI_API_KEY')
-    azure_endpoint = os.getenv('AZURE_OPENAI_ENDPOINT')
-    if not api_key or not azure_endpoint:
-        raise ValueError("AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT must be set in the environment variables")
-
-@app.on_event("startup")
-async def on_startup():
-    check_env()
+if not api_key or not azure_endpoint:
+    raise ValueError("AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT must be set in the environment variables")
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -46,15 +39,8 @@ app.add_middleware(
 )
 app.mount("/images", StaticFiles(directory=PLOT_DIR), name="images")
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-
-
 def streamed_res(content):
     chunks = 3000
-
     for l in range(len(content)):
         time.sleep(0.005)
         yield content[l]
@@ -62,7 +48,6 @@ def streamed_res(content):
 def format_to_html(text):
     # Replace headers denoted by '###'
     text = re.sub(r'### (.+)', r'<h4>\1</h4>', text)
-
     # Replace bold text denoted by '**'
     text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
     text = re.sub(r'```.*?```', '', text, flags=re.DOTALL)
@@ -78,26 +63,6 @@ def format_to_chat(text):
     text = re.sub(r"【.*?】", "", text)
     return text
 
-
-def parse_text_to_dict(text):
-    # Dictionary to hold the entire structure
-    content_dict = {}
-    title_pattern = r"<h3>(.*?)</h3>(.*?)(?=<h3>|$)"
-    titles = re.findall(title_pattern, text, re.DOTALL)
-
-    for title, body in titles:
-        section_dict = {}
-        section_pattern = r"\*\*(.*?)\*\*(.*?)(?=\*\*|$)"
-        sections = re.findall(section_pattern, body, re.DOTALL)
-        for section, content in sections:
-            clean_content = content.replace('\n\n', '\n').strip()
-            section_dict[section] = clean_content
-        if section_dict == {}:
-            content_dict[title] = body.replace('\n\n', '\n').strip()
-        else: 
-            content_dict[title] = section_dict
-    return content_dict
-
 def parse_code(text):
     code_pattern = r"```(.*?)```"
     code = re.findall(code_pattern, text, re.DOTALL)
@@ -111,23 +76,10 @@ def parse_code(text):
 def gen_plots(code):
     try:
         exec(code)
-    except Exception as e:
-        print(e)
-        return None
-    if "plt.savefig" in code:
-        return None
-    filename = "plot.png"
-    filepath = os.path.join(PLOT_DIR, filename)
-    plt.savefig(filepath)
-    plt.close()
-    return filepath
-
-def gen_plots2(code):
-    try:
-        exec(code)
-        return
+        return True
     except Exception as e:
         print("genplots exception", code, e)
+        return e
 
 
 def gen_plots3(years, data):
@@ -156,159 +108,151 @@ def gen_plots3(years, data):
             plt.ylabel(metric)
             figure_name = metric.replace(" ", "_")
             plt.savefig(f'./plots/{figure_name}.png')
-            # if len(value) > 2:
-            #     change = []
-            #     for i in range(len(value)-1):
-            #         change.append(((value[i+1]/value[i])-1)*100)
-            #     plt.figure(figsize=(10,6))
-            #     plt.title(f"{metric} % change")
-            #     plt.bar(years[1:], change)
-            #     plt.xlabel("Years")
-            #     plt.xticks(years[1:])
-            #     plt.ylabel("% Change")
-            #     figure_name = metric.replace(" ", "_")
-            #     plt.savefig(f'./plots/{figure_name}_change.png')
-            
-class Model:
+    
+
+class main_AIModel:
     _instance = None
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(Model, cls).__new__(cls)
+            cls._instance = super(main_AIModel, cls).__new__(cls)
             cls._instance.model = AIModel()  
         return cls._instance
     def create_vector_store(self, file_paths):
         self.model.create_vector_store(file_paths)
         return True
-    def ask_prompt(self, prompt, instructions=""):
-        return self.model.analyse2(prompt=prompt, instructions=instructions)
-    def ask_metric(self, metric, instructions=""):
-        return self.model.analyse3(metric=metric, instructions=instructions)
-    def plot_prompt(self, prompt):
-        return self.model.plots2(metric=prompt)
-    def ask_chat_prompt(self, prompt):
+    def business_overview(self):
+        return self.model.business_overview()
+    def analyse(self, metric, instructions=""):
+        return self.model.analyse(metric=metric, instructions=instructions)
+    def company_name(self):
+        return self.model.company_name()
+    def plot_prompt(self, prompt, customPrompt=""):
+        return self.model.plots(metric=prompt, customPrompt=customPrompt)
+    def chat_prompt(self, prompt):
         return self.model.chat_prompt(prompt=prompt)
     def mda_score(self):
         return self.model.mda_score()
 
-class PPT:
+class main_PPT:
     _instance = None
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(PPT, cls).__new__(cls)
-            cls._instance.pptobj = CreatePPT()  # Initialize your AI pptobj here
+            cls._instance = super(main_PPT, cls).__new__(cls)
+            cls._instance.pptobj = PPT() 
         return cls._instance
-    def update_slide(self, slide, to_replace, content):
-        self.pptobj.update_textbox(slide, to_replace, content)
     def add_content(self, title, content):
         self.pptobj.add_content(title, content)
+    def update_title(self, title):
+        self.pptobj.update_title(title)
     def add_images(self, metric):
         self.pptobj.add_images(metric)
     def output_path(self):
         return self.pptobj.outputpath
+    def add_mda(self, scores):
+        self.pptobj.add_mda(scores)
+    
 
 
 @app.post("/uploadfiles/")
 async def upload_files(files: List[UploadFile] = File(...)):
-    model = Model()
-    file_contents = []
-    content = {}
+    model = main_AIModel()
+    ppt = main_PPT()
     excel_names = []
-
     for file in files:
         contents = await file.read()
-        file_contents.append(contents) #remove line???
         with open(f'saved_files/{file.filename}', 'wb') as f:
             f.write(contents)
-        
         if "xlsx" in file.filename:
             sheets_dict = pd.read_excel(f'saved_files/{file.filename}', sheet_name=None)
             for name, sheet in sheets_dict.items():   
-                sheet.to_csv(f'saved_files/{name}.txt', '|', index = None, header=True)
-                excel_names.append(f'saved_files/{name}.txt')
+                sheet.to_csv(f'saved_files/{name}_{sheet}.txt', '|', index = None, header=True)
+                excel_names.append(f'saved_files/{name}_{sheet}.txt')
     file_paths = [f"saved_files/{file.filename}" for file in files if "xlsx" not in file.filename]
     file_paths.extend(excel_names)
     model.create_vector_store(file_paths)
+    company_name = model.company_name()
+    ppt.update_title(f"{company_name} Analysis")
     return True
 
 @app.post("/prompt/")
-async def ask_prompt(request: Request):
+async def prompt(request: Request):
     prompt = await request.body()
     prompt_text = prompt.decode('utf-8')
-    model = Model()
-    ppt = PPT()
-    ppt_slide = prompt_text.split()[0]
-    res = model.ask_metric(prompt_text)
-    # ppt.update_slide(ppt_slide.lower(),ppt_slide.lower(), res)
+    model = main_AIModel()
+    ppt = main_PPT()
+    if prompt_text == "businessoverview":
+        res = model.business_overview()
+    else:
+        res = model.analyse(prompt_text)
     ppt.add_content(prompt_text, res)
     return PlainTextResponse(format_to_html(res))
 
 @app.post("/plotprompt/")
-async def ask_plots(request: Request):
+async def plotprompt(request: Request):
     prompt = await request.body()
     prompt_text = prompt.decode('utf-8')
-    ppt_slide = prompt_text.split()[0]
-    model = Model()
-    res = model.plot_prompt(prompt_text)
+    print("plots", prompt_text)
+    plot_prompt_text = prompt.decode('utf-8').replace(" ", "").lower()
+    model = main_AIModel()
+    if plot_prompt_text == "businessoverview":
+        return ""
+    res = model.plot_prompt(plot_prompt_text)
     code_part = parse_code(res)
-    print("parssed code", code_part)
-    gen_plots2(code_part)
-    ppt = PPT()
+    code_result = gen_plots(code_part)
+    if  code_result != True:
+        # Retry functionality
+        new_prompt = f"This didn't work, i got the error {code_result}. Retry using the same instructions as before; \
+                        make code for plots for metric {plot_prompt_text}"
+        res = model.plot_prompt(prompt=plot_prompt_text, customPrompt=new_prompt)
+        code_part = parse_code(res)
+        code_result = gen_plots(code_part)
+    ppt = main_PPT()
     ppt.add_images(prompt_text)
     return res
 
-@app.post("/mdascore")
-async def mda_score():
-    model = Model()
+@app.get("/mdascore")
+def mda_score():
+    model = main_AIModel()
+    ppt = main_PPT()
     res = model.mda_score()
+    ppt.add_mda(res)
     return res
 
+
 @app.post("/chatprompt/")
-async def ask_chat_prompt(request: Request):
+async def chat_prompt(request: Request):
     prompt = await request.body()
     prompt_text = prompt.decode('utf-8')
-    model = Model()
-
-    res = model.ask_chat_prompt(prompt_text)
+    model = main_AIModel()
+    res = model.chat_prompt(prompt_text)
     return PlainTextResponse(format_to_chat(res))
 
 @app.get("/download-ppt/")
 def download_ppt():
-    ppt = PPT()
+    ppt = main_PPT()
     file_path = ppt.output_path()
-    print(file_path)
-    return FileResponse(file_path, media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation", filename="analysis.pptx")
+    return FileResponse(file_path, 
+                        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation", 
+                        filename="analysis.pptx")
 
 
 
 @app.get("/list-images")
-def list_images(image_context = Query(None, alias="context")):
-    print(image_context)
+def list_images(image_context = Query(None, alias="metric")):
+    if not image_context:
+        return []
     with os.scandir(PLOT_DIR) as entries:
         files = [entry.name for entry in entries if entry.is_file() and image_context.lower() in entry.name.lower()]
-    if image_context == "":
-        with os.scandir(PLOT_DIR) as entries:
-            files = [entry.name for entry in entries if entry.is_file() if "revenue" not in entry.name.lower() and "operating" not in entry.name.lower() and "cash" not in entry.name.lower()]
-    print(files)
     return files
 
 
-# @app.post("/uploadfiles/")
-# async def upload_files(files: List[UploadFile]= File(...)):
-#     r = await files.body()
-#     print(r)
-#     file_contents = []
-#     return {"message": "Files uploaded successfully"}
-#     for file in files:
-#         contents = await file.read()
-#         file_contents.append(contents.decode('utf-8'))
-#     # Combine file contents and add the initial prompt
-#     combined_content = "\n".join(file_contents)
-#     combined_prompt = f"\n\nData:\n{combined_content}\n\nPlease analyze the above data and provide insights."
-#     # Analyze the combined content with OpenAI API
-#     generator = get_openai_generator(combined_prompt)
-#     return StreamingResponse(generator, media_type='text/event-stream')
 
 if __name__ == '__main__':
+    with os.scandir(PLOT_DIR) as existing_plots:
+        for plot in existing_plots:
+            os.remove(plot.path)
+    with os.scandir("./saved_files") as existing_files:
+        for f in existing_files:
+            os.remove(f.path)
     import uvicorn
-    check_env()
     uvicorn.run(app, host='0.0.0.0', port=8000)
