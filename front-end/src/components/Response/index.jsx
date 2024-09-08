@@ -1,154 +1,158 @@
-import { Box, Stack, Typography } from "@mui/material";
+import { Box, Grid, Stack, Typography } from "@mui/material";
 import { useState, useEffect } from "react";
 import Plots from "../Plots";
 import Mdascore from "../Mdascore";
 
 const Response = ({ metrics, setSubmitted, includeSentiment }) => {
   const [responseTexts, setResponseTexts] = useState({});
-  const [finishedResponses, setFinishedResponses] = useState({});
   const [mdaScore, setmdaScore] = useState(null);
+  const [mdaLabelScores, setmdaLabelScores] = useState({});
+  const [images, setImages] = useState({});
+  const [analysisComplete, setanalysisComplete] = useState(false);
 
   const fetchAndStreamMetrics = async () => {
-    const date = new Date();
-
-    // const responses = metrics.map((metric) =>
-    //   fetch("http://localhost:8000/prompt/", {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "text/plain",
-    //     },
-    //     body: metric.key,
-    //   })
-    // );
-
-    // const plots = metrics.map((metric) =>
-    //   fetch("http://localhost:8000/plotprompt/", {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "text/plain",
-    //     },
-    //     body: metric,
-    //   })
-    // );
-
+    const responses = metrics.map((metric) =>
+      fetch("http://localhost:8000/prompt/", {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: metric.label,
+      })
+    );
     for (let i = 0; i < metrics.length; i++) {
       const metric = metrics[i].key;
-
-      //   const response = await responses[i]; // Wait for the response of the current metric
-      const response = await fetch("http://localhost:8000/prompt/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain",
-        },
-        body: metrics[i].label,
-      });
-
+      const response = await responses[i]; // Wait for the response of the current metric
       await fetch("http://localhost:8000/plotprompt/", {
         method: "POST",
-        headers: {
-          "Content-Type": "text/plain",
-        },
-        body: metric,
+        headers: { "Content-Type": "text/plain" },
+        body: metrics[i].label,
       });
-      setFinishedResponses((prev) => ({ ...prev, [metric]: true }));
-
-      await gensection(response, metric);
+      const imageNamesReq = await fetch(
+        `http://localhost:8000/list-images?metric=${encodeURIComponent(metric)}`
+      );
+      const imageNames = await imageNamesReq.json();
+      setImages((prev) => {
+        const newState = { ...prev };
+        newState[metric] = imageNames.map(
+          (filename) => `http://localhost:8000/images/${filename}`
+        );
+        return newState;
+      });
+      const content = await response.text();
+      streamContent(content, metric);
     }
-    setSubmitted(true);
+    setanalysisComplete(true);
   };
 
-  const gensection = async (response, metric) => {
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder("utf-8");
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      const chunk = decoder.decode(value, { stream: true });
-
-      // Update the state for the specific metric
+  const streamContent = (content, metric, index = 0) => {
+    if (index < content.length) {
       setResponseTexts((prev) => ({
         ...prev,
-        [metric]: (prev[metric] || "") + chunk,
+        [metric]: (prev[metric] || "") + content[index],
       }));
+
+      setTimeout(() => {
+        streamContent(content, metric, index + 1);
+      }, 5);
     }
   };
-
   // Kick off the fetching and streaming when the component mounts or when metrics change
   useEffect(() => {
-    if (metrics.length > 0) {
-      fetchAndStreamMetrics();
-    }
+    fetchAndStreamMetrics();
   }, []);
   const getMdaScore = async () => {
     const mda_response = await fetch("http://localhost:8000/mdascore/", {
-      method: "POST",
+      method: "GET",
       headers: {
-        "Content-Type": "text/plain", // Explicitly declare the content type
+        "Content-Type": "text/plain",
       },
-      body: "",
     });
-
     const text = await mda_response.text();
-
-    const mda_score = Math.round(
-      parseFloat(text.split(",")[0].replace(/"/g, ""), 10)
-    );
-
-    setmdaScore(isNaN(mda_score) ? null : mda_score);
+    console.log("text response", text);
+    if (text === null || text === "null") {
+      setmdaScore("Error generating score");
+    } else {
+      const scores = text.split(",");
+      const total_mda_score = parseFloat(scores[0].replace(/"/g, ""), 10);
+      const labelScores = {
+        positive: parseFloat(scores[1].replace(/"/g, ""), 10),
+        neutral: parseFloat(scores[2].replace(/"/g, ""), 10),
+        negative: parseFloat(scores[3].replace(/"/g, ""), 10),
+      };
+      setmdaLabelScores(labelScores);
+      setmdaScore(
+        isNaN(total_mda_score) ? "Error generating score" : total_mda_score
+      );
+    }
   };
   useEffect(() => {
     if (includeSentiment) {
       getMdaScore();
     }
   }, [includeSentiment]);
+  useEffect(() => {
+    if (analysisComplete && mdaScore !== null) {
+      setSubmitted(true);
+    }
+    if (analysisComplete && includeSentiment === false) {
+      setSubmitted(true);
+    }
+  }, [analysisComplete, mdaScore, setSubmitted, includeSentiment]);
   return (
     <>
       {metrics.map((metric) => (
-        <>
-          {metric.key === "overview" ? (
+        <Stack key={metric.key}>
+          {metric.key === "businessoverview" ? (
             <>
-              <Typography variant="subtitle" fontWeight="bold">
+              <Typography variant="h5" fontWeight="bold" padding={2}>
                 {metric.label}
               </Typography>
               <Typography
                 sx={{ flexGrow: "auto", whiteSpace: "pre-wrap" }}
                 dangerouslySetInnerHTML={{ __html: responseTexts[metric.key] }}
-                marginBottom={10}
+                marginBottom={5}
                 marginX={2}
               />
             </>
           ) : (
             <>
-              <Typography variant="subtitle" fontWeight="bold">
+              <Typography variant="h5" fontWeight="bold" padding={2}>
                 {metric.label}
               </Typography>
-              <Stack flexDirection="row">
-                <Box maxWidth="55%">
-                  <Typography
-                    sx={{ flexGrow: "auto", whiteSpace: "pre-wrap" }}
-                    dangerouslySetInnerHTML={{
-                      __html: responseTexts[metric.key],
-                    }}
-                    marginBottom={10}
-                    marginX={2}
-                  />
-                </Box>
-                <Box maxWidth="35%">
-                  <Plots
-                    isFinished={finishedResponses[metric.key]}
-                    metric={metric.key}
-                  />
-                </Box>
-              </Stack>
+              <Grid
+                container
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                }}
+                paddingBottom={5}
+              >
+                {/* Text */}
+                <Grid item xs={12} md={7}>
+                  <Box>
+                    <Typography
+                      sx={{ flexGrow: "auto", whiteSpace: "pre-wrap" }}
+                      dangerouslySetInnerHTML={{
+                        __html: responseTexts[metric.key],
+                      }}
+                      marginX={2}
+                    />
+                  </Box>
+                </Grid>
+                {/* Image */}
+                {images[metric.key] && <Plots images={images[metric.key]} />}
+              </Grid>
             </>
           )}
-        </>
+        </Stack>
       ))}
-      {includeSentiment && <Mdascore score={mdaScore} />}
+
+      {includeSentiment && (
+        <Mdascore score={mdaScore} labelScores={mdaLabelScores} />
+      )}
     </>
   );
 };
-
 export default Response;

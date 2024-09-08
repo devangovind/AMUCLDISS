@@ -15,7 +15,6 @@ import Iconify from "../Iconify";
 
 const DownloadButton = () => {
   const handleDownload = async () => {
-    console.log("Download");
     const response = await fetch("http://localhost:8000/download-ppt/", {
       method: "GET",
       headers: {
@@ -27,9 +26,10 @@ const DownloadButton = () => {
     if (response.ok) {
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
+      // creating an <a> element forced to have the download as its href then forcing it to be clicked
       const a = document.createElement("a");
       a.href = url;
-      a.download = "analysis.pptx"; // The default filename for the downloaded file
+      a.download = "analysis.pptx";
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -48,6 +48,7 @@ const DownloadButton = () => {
         boxShadow: "0px 0px 10px 1px rgba(0,0,0,0.5);",
       }}
       onClick={handleDownload}
+      aria-label="download-button"
     >
       <Iconify icon="material-symbols:download" width={40} color="white" />
     </IconButton>

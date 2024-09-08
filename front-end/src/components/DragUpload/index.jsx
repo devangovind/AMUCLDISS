@@ -41,10 +41,17 @@ const DragUpload = ({
     const selectedFiles = event.target.files;
     if (selectedFiles && selectedFiles.length > 0) {
       const newFiles = Array.from(selectedFiles);
-      const filesToBeAdded = newFiles.filter((elem) => !files.includes(elem));
-      console.log(newFiles, files, filesToBeAdded, selectedFiles);
-      console.log(typeof files);
-      setFiles((prevFiles) => [...prevFiles, ...filesToBeAdded]);
+      setFiles((prevFiles) => {
+        const existingFiles = new Set(
+          prevFiles.map((file) => file.name + file.size + file.lastModified)
+        );
+        const filesToBeAdded = newFiles.filter(
+          (file) =>
+            !existingFiles.has(file.name + file.size + file.lastModified)
+        );
+
+        return [...prevFiles, ...filesToBeAdded];
+      });
     }
   };
   const handleDrop = (event) => {
@@ -52,18 +59,28 @@ const DragUpload = ({
     const droppedFiles = event.dataTransfer.files;
     if (droppedFiles.length > 0) {
       const newFiles = Array.from(droppedFiles);
-      const filesToBeAdded = newFiles.filter((elem) => !files.includes(elem));
-      setFiles((prevFiles) => [...prevFiles, ...filesToBeAdded]);
+      setFiles((prevFiles) => {
+        const existingFiles = new Set(
+          prevFiles.map((file) => file.name + file.size + file.lastModified)
+        );
+        const filesToBeAdded = newFiles.filter(
+          (file) =>
+            !existingFiles.has(file.name + file.size + file.lastModified)
+        );
+
+        return [...prevFiles, ...filesToBeAdded];
+      });
     }
   };
 
   const handleRemoveFile = (index) => {
     setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+    document.getElementById("file-input").value = "";
   };
 
-  useEffect(() => {
-    onFilesSelected && onFilesSelected(files);
-  }, [files, onFilesSelected]);
+  // useEffect(() => {
+  //   onFilesSelected && onFilesSelected(files);
+  // }, [files, onFilesSelected]);
 
   useEffect(() => {
     if (additionalMetric.trim() === "") {
@@ -78,21 +95,16 @@ const DragUpload = ({
   };
 
   const addMetric = () => {
-    const newMetric = additionalMetric.trim().toLowerCase();
-    console.log(chips, additionalMetric, newMetric);
+    const newMetric = additionalMetric.replace(/\s+/g, "").toLowerCase();
     const metricAsChip = { key: newMetric, label: additionalMetric };
-    console.log(chips.includes(metricAsChip));
     const chipExists = chips.some((item) => item.key === newMetric);
     if (chipExists) {
       const chipSelected = selectedChips.some((item) => item.key === newMetric);
-      if (chipSelected) {
+      if (!chipSelected) {
         setSelectedChips((prev) => [...prev, metricAsChip]);
       }
     } else {
-      setChips((prev) => [
-        ...prev,
-        { key: newMetric, label: additionalMetric },
-      ]);
+      setChips((prev) => [...prev, metricAsChip]);
       setSelectedChips((prev) => [...prev, metricAsChip]);
     }
     setAdditionalMetric("");
@@ -121,18 +133,19 @@ const DragUpload = ({
           Drag and drop your files here
         </Typography>
         <Typography variant="body1" sx={{ padding: 2 }}>
-          Limit 15MB per file. Supported files: .PDF, .DOCX, .PPTX, .TXT, .XLSX
+          Limit 15MB per file. Supported files: .PDF, .DOCX, .PPTX, .TXT, .XLSX,
+          .CSV
         </Typography>
 
         <input
           type="file"
           hidden
-          id="browse"
+          id="file-input"
           onChange={handleFileChange}
-          accept=".pdf,.docx,.pptx,.txt,.xlsx"
+          accept=".pdf,.docx,.pptx,.txt,.xlsx,.csv"
           multiple
         />
-        <label htmlFor="browse">Browse files</label>
+        <label htmlFor="file-input">Browse files</label>
       </Box>
 
       {files.length > 0 && (
@@ -278,19 +291,20 @@ const DragDropBox = styled(Card)(({ theme }) => ({
   flexGrow: "auto",
   borderStyle: "dashed",
   borderColor: theme.palette.am.main,
+  borderWidth: 2,
 }));
 
 const ChipsWithCheckboxGroup = ({ chips, selectedChips, setSelectedChips }) => {
   // const chipsOrder = chips.map((item) => item.key);
   const handleToggleChip = (chip) => {
     const chipSelected = selectedChips.some((item) => item.key === chip.key);
-    console.log("pre seelcted: ", selectedChips);
+
     setSelectedChips((prevSelectedChips) =>
       chipSelected
         ? prevSelectedChips.filter((item) => item.key !== chip.key)
         : [...prevSelectedChips, chip]
     );
-    console.log(chipSelected, "clicked", chip, "seelcted: ", selectedChips);
+
     setSelectedChips((prevSelectedChips) =>
       prevSelectedChips.sort((a, b) => {
         let indexA = chips.indexOf(a);
@@ -318,19 +332,20 @@ const ChipsWithCheckboxGroup = ({ chips, selectedChips, setSelectedChips }) => {
         gap={2}
       >
         {chips.map((item) => (
-          <CustomChips
-            key={item.key}
-            label={item.label}
-            isSelected={selectedChips.some((prev) => prev.key === item.key)}
-            onToggle={() => handleToggleChip(item)}
-          />
+          <div key={item.key}>
+            <CustomChips
+              label={item.label}
+              isSelected={selectedChips.some((prev) => prev.key === item.key)}
+              onToggle={() => handleToggleChip(item)}
+            />
+          </div>
         ))}
       </Stack>
     </Box>
   );
 };
 
-const CustomChips = ({ key, label, isSelected, onToggle }) => {
+const CustomChips = ({ label, isSelected, onToggle }) => {
   return (
     <Chip
       label={
@@ -346,6 +361,7 @@ const CustomChips = ({ key, label, isSelected, onToggle }) => {
         />
       }
       variant={isSelected ? "default" : "outlined"}
+
       // onClick={onToggle}
     />
   );

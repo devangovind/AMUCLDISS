@@ -1,0 +1,21 @@
+services:
+  backend:
+    build: ./fastapi-backend
+    container_name: fastapi-backend
+    environment:
+      PORT: 8000
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./fastapi-backend/app:/app
+    command: ["python3", "main.py"]
+  frontend:
+    build: ./front-end
+    container_name: react-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./front-end:/app # Map entire project directory
+      - /app/node_modules

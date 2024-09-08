@@ -36,11 +36,9 @@ const Chatbot = () => {
     }
   }, [currMessage]);
   const toggleOpen = () => {
-    console.log(open);
     setOpen(!open);
   };
   const sendMessage = async () => {
-    console.log("sent message");
     const sentMessage = {
       sender: "user",
       message: currMessage,
@@ -49,8 +47,6 @@ const Chatbot = () => {
     setMessages((prevMessages) => [...prevMessages, sentMessage]);
     setinputDisabled(true);
     setsendDisabled(true);
-    console.log(sentMessage);
-    console.log(messages);
     setMessages((prevMessages) => [
       ...prevMessages,
       { sender: "ai", message: "Analysing..." },
@@ -62,7 +58,6 @@ const Chatbot = () => {
       },
       body: currMessage,
     });
-    console.log("hereeee");
 
     const text = await newResponse.text();
     // await genresponse(newResponse);
@@ -70,7 +65,6 @@ const Chatbot = () => {
       sender: "ai",
       message: text,
     };
-
     setMessages((prevMessages) => [
       ...prevMessages.slice(0, prevMessages.length - 1),
       aiResponse,
@@ -134,9 +128,9 @@ const Chatbot = () => {
           backgroundColor={theme.palette.am.dark}
         >
           <Typography fontWeight="bold" color="white" marginLeft={1}>
-            AI Financial Advisor
+            AI Financial Advisor Chat
           </Typography>
-          <IconButton onClick={() => toggleOpen()}>
+          <IconButton onClick={() => toggleOpen()} aria-label="chat-bot-toggle">
             <Iconify
               icon={
                 open
@@ -157,8 +151,9 @@ const Chatbot = () => {
                 // marginBottom: "20px",
               }}
             >
-              {messages.map((messageObj) => (
+              {messages.map((messageObj, index) => (
                 <ChatMessage
+                  key={index}
                   sender={messageObj.sender}
                   message={messageObj.message}
                 />
@@ -193,6 +188,7 @@ const Chatbot = () => {
                 onClick={() => sendMessage()}
                 disabled={sendDisabled}
                 sx={{ marginRight: "10px" }}
+                aria-label="chat-bot-send"
               >
                 Send
               </Button> */}
@@ -200,6 +196,7 @@ const Chatbot = () => {
                 onClick={() => sendMessage()}
                 disabled={sendDisabled}
                 sx={{ marginRight: "10px" }}
+                aria-label="chat-bot-send"
               >
                 <Iconify icon="bi:send-fill" />
               </IconButton>

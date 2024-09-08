@@ -43,17 +43,13 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setResponse("Uploading files..."); // Clear previous response
-    console.log(files);
     setSubmitted(true);
     if (files.length > 0) {
       const formData = new FormData();
       Array.from(files).forEach((file) => {
         formData.append("files", file);
       });
-      console.log(formData);
-      formData.getAll("files").forEach((file) => {
-        console.log(file.name); // Logs the name of each file
-      });
+
       const uploadfiles = await fetch("http://localhost:8000/uploadfiles/", {
         method: "POST",
         body: formData,
@@ -158,6 +154,7 @@ function App() {
               dangerouslySetInnerHTML={{ __html: response }}
               marginBottom={10}
               marginX={2}
+              aria-label="response-overview"
             />
             <Stack flexDirection="row">
               <Box maxWidth="55%">
