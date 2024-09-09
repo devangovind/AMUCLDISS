@@ -22,13 +22,7 @@ import Response from "./components/Response";
 
 function App() {
   const [isSubmitted, setSubmitted] = useState(false);
-  const [response, setResponse] = useState("");
-  const [revenue, setRevenue] = useState("");
-  const [operatingIncome, setOperatingIncome] = useState("");
-  const [cashflow, setCashFlow] = useState("");
-  const [otherKPIs, setOtherKPIs] = useState("");
   const [files, setFiles] = useState([]);
-  const [mdaScore, setmdaScore] = useState(null);
   const [isFinished, setIsFinished] = useState(false);
   const [selectedChips, setSelectedChips] = useState([]);
   const [isUploaded, setIsUploaded] = useState(false);
@@ -42,7 +36,6 @@ function App() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setResponse("Uploading files..."); // Clear previous response
     setSubmitted(true);
     if (files.length > 0) {
       const formData = new FormData();
@@ -55,22 +48,6 @@ function App() {
         body: formData,
       });
       setIsUploaded(true);
-      setResponse("Uploaded");
-    }
-  };
-
-  const gensection = async (response, setSection) => {
-    const reader = response.body.getReader();
-    const chunks = [];
-    const decoder = new TextDecoder("utf-8");
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
-      chunks.push(value);
-      const chunk = decoder.decode(value, { stream: true });
-      setSection((prev) => prev + chunk);
     }
   };
 
@@ -125,100 +102,9 @@ function App() {
                 includeSentiment={includeSentiment}
               />
             )}
-
-            {/* {selectedChips.map( (index, metric) => {
-              <>
-              <Typography
-              sx={{ flexGrow: "auto", whiteSpace: "pre-wrap" }}
-              dangerouslySetInnerHTML={{ __html: response }}
-              marginBottom={10}
-              marginX={2}
-            />
-            <Stack flexDirection="row">
-              <Box maxWidth="55%">
-                <Typography
-                  sx={{ flexGrow: "auto", whiteSpace: "pre-wrap" }}
-                  dangerouslySetInnerHTML={{ __html: revenue }}
-                  marginBottom={10}
-                  marginX={2}
-                />
-              </Box>
-              <Box maxWidth="35%">
-                <Plots isSubmitted={isFinished} context={"Revenue"} />
-              </Box>
-            </Stack>
-            </>
-            })}
-            <Typography
-              sx={{ flexGrow: "auto", whiteSpace: "pre-wrap" }}
-              dangerouslySetInnerHTML={{ __html: response }}
-              marginBottom={10}
-              marginX={2}
-              aria-label="response-overview"
-            />
-            <Stack flexDirection="row">
-              <Box maxWidth="55%">
-                <Typography
-                  sx={{ flexGrow: "auto", whiteSpace: "pre-wrap" }}
-                  dangerouslySetInnerHTML={{ __html: revenue }}
-                  marginBottom={10}
-                  marginX={2}
-                />
-              </Box>
-              <Box maxWidth="35%">
-                <Plots isSubmitted={isFinished} context={"Revenue"} />
-              </Box>
-            </Stack>
-
-            <Stack flexDirection="row">
-              <Box maxWidth="55%">
-                <Typography
-                  sx={{ flexGrow: "auto", whiteSpace: "pre-wrap" }}
-                  dangerouslySetInnerHTML={{ __html: operatingIncome }}
-                  marginBottom={10}
-                  marginX={2}
-                />
-              </Box>
-              <Box maxWidth="35%">
-                <Plots isSubmitted={isFinished} context="Operating" />
-              </Box>
-            </Stack>
-            <Stack flexDirection="row">
-              <Box maxWidth="55%">
-                <Typography
-                  sx={{ flexGrow: "auto", whiteSpace: "pre-wrap" }}
-                  dangerouslySetInnerHTML={{ __html: cashflow }}
-                  marginBottom={10}
-                  marginX={2}
-                />
-              </Box>
-              <Box maxWidth="35%">
-                <Plots isSubmitted={isFinished} context="Cash" />
-              </Box>
-            </Stack>
-            <Stack flexDirection="row">
-              <Box maxWidth="55%">
-                <Typography
-                  sx={{ flexGrow: "auto", whiteSpace: "pre-wrap" }}
-                  dangerouslySetInnerHTML={{ __html: otherKPIs }}
-                  marginBottom={10}
-                  marginX={2}
-                />
-              </Box>
-              <Box maxWidth="35%">
-                <Plots isSubmitted={isFinished} context="" />
-              </Box>
-            </Stack>
-            {mdaScore !== null && (
-              <>
-                <Mdascore score={mdaScore} />
-              </>
-            )} */}
           </Card>
         </>
       )}
-
-      {/* </div> */}
     </Container>
   );
 }

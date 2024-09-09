@@ -78,7 +78,6 @@ def gen_plots(code):
         print("genplots exception", code, e)
         return e
     
-
 class main_AIModel:
     _instance = None
     def __new__(cls):
@@ -203,8 +202,6 @@ def download_ppt():
                         media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation", 
                         filename="analysis.pptx")
 
-
-
 @app.get("/list-images")
 def list_images(image_context = Query(None, alias="metric")):
     if not image_context:
@@ -212,8 +209,6 @@ def list_images(image_context = Query(None, alias="metric")):
     with os.scandir(PLOT_DIR) as entries:
         files = [entry.name for entry in entries if entry.is_file() and image_context.lower() in entry.name.lower()]
     return files
-
-
 
 if __name__ == '__main__':
     with os.scandir(PLOT_DIR) as existing_plots:
