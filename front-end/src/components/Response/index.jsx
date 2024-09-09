@@ -55,7 +55,7 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
       }, 5);
     }
   };
-  // Kick off the fetching and streaming when the component mounts or when metrics change
+
   useEffect(() => {
     fetchAndStreamMetrics();
   }, []);
@@ -67,7 +67,7 @@ const Response = ({ metrics, setSubmitted, includeSentiment }) => {
       },
     });
     const text = await mda_response.text();
-    console.log("text response", text);
+
     if (text === null || text === "null") {
       setmdaScore("Error generating score");
     } else {
