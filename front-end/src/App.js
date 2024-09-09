@@ -30,7 +30,6 @@ function App() {
 
   const handleFileChange = (e) => {
     // e.preventDefault();
-
     setFiles(e);
   };
 
